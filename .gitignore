@@ -1,0 +1,19 @@
+# dependencies
+node_modules
+
+# build output
+dist
+dist-ssr
+*.tsbuildinfo
+
+# vercel
+.vercel
+
+# local / editor
+*.local
+.DS_Store
+.vite
+*.log
+
+# local agent config
+.claude/

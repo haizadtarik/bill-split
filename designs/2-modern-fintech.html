@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SplitBill — Design 2: Modern Fintech</title>
+<style>
+  :root{
+    --bg:#eef0f4; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e7eaf0;
+    --accent:#4f46e5; --accent-soft:#eef0fe; --green:#16a34a; --green-soft:#e9f7ee;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'Segoe UI',Inter,system-ui,sans-serif;background:#dce0e8;color:var(--ink);
+    padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .doc-head{max-width:1100px;margin:0 auto 36px}
+  .doc-head h1{font-size:26px;letter-spacing:-.5px}
+  .doc-head .tag{display:inline-block;margin-top:10px;background:var(--accent-soft);color:var(--accent);
+    padding:5px 12px;font-size:12px;font-weight:600;border-radius:20px}
+  .doc-head p{margin-top:14px;max-width:680px;line-height:1.6;color:var(--muted);font-size:14px}
+  .gallery{display:flex;gap:26px;overflow-x:auto;padding:10px 0 30px;max-width:1100px;margin:0 auto;scroll-snap-type:x mandatory}
+  .screen{flex:0 0 320px;scroll-snap-align:center}
+  .label{color:#475569;font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:10px;text-align:center}
+  .phone{background:var(--bg);border-radius:34px;padding:14px;box-shadow:0 24px 50px rgba(15,23,42,.28);height:660px;overflow:hidden;display:flex;flex-direction:column}
+  .scr{background:var(--bg);flex:1;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+  .status{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--ink);padding:2px 8px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:2px 4px}
+  .topbar h2{font-size:20px;letter-spacing:-.4px}
+  .icon-btn{width:36px;height:36px;border-radius:12px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+  .card{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+  .cta{background:var(--accent);color:#fff;border:none;border-radius:16px;padding:16px;width:100%;
+    font-size:15px;font-weight:600;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 8px 20px rgba(79,70,229,.30)}
+  .cta.ghost{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(15,23,42,.06)}
+  .muted{color:var(--muted)}
+  .row{display:flex;justify-content:space-between;align-items:center}
+  .row+.row{margin-top:12px}
+  .hist{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .hist:last-child{border:none}
+  .hbadge{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+  .small{font-size:12px}
+  .big-amt{font-size:34px;font-weight:700;letter-spacing:-1px}
+  .scanview{flex:1;background:#0f172a;border-radius:20px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .frame{width:78%;height:60%;border:2px solid rgba(255,255,255,.7);border-radius:14px;position:relative}
+  .frame::before,.frame::after{content:"";position:absolute;width:22px;height:22px;border:3px solid var(--accent)}
+  .frame::before{top:-2px;left:-2px;border-right:none;border-bottom:none;border-radius:8px 0 0 0}
+  .frame::after{bottom:-2px;right:-2px;border-left:none;border-top:none;border-radius:0 0 8px 0}
+  .scanline{position:absolute;left:8%;right:8%;height:2px;background:var(--accent);top:46%;box-shadow:0 0 16px 2px var(--accent)}
+  .pgwrap{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:10px}
+  .pgwrap i{display:block;height:100%;width:64%;background:var(--accent);border-radius:6px}
+  .item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border:none}
+  .qty{width:26px;height:26px;border-radius:8px;background:var(--bg);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted)}
+  .price{font-variant-numeric:tabular-nums;font-weight:600}
+  .av-row{display:flex;gap:8px;margin-top:8px}
+  .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px}
+  .av.a{background:#ef4444}.av.s{background:#f59e0b}.av.j{background:#0ea5e9}.av.y{background:var(--accent)}
+  .av.sm{width:24px;height:24px;font-size:10px}
+  .av.add{background:var(--card);color:var(--muted);border:1.5px dashed var(--line)}
+  .seg{display:flex;background:var(--bg);border-radius:12px;padding:3px;margin-top:4px}
+  .seg span{flex:1;text-align:center;font-size:12px;font-weight:600;padding:7px;border-radius:9px;color:var(--muted)}
+  .seg span.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .tag-pill{font-size:10px;background:var(--bg);color:var(--muted);padding:3px 8px;border-radius:8px}
+  .owe-card{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+  .owe-card:last-child{border:none}
+  .scroll{overflow-y:auto;flex:1}
+  .tabbar{display:flex;justify-content:space-around;padding-top:6px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+  .tabbar .on{color:var(--accent)}
+  .you-row{background:var(--green-soft);margin:0 -18px;padding:14px 18px;border-radius:0}
+</style>
+</head>
+<body>
+<div class="doc-head">
+  <h1>② MODERN FINTECH</h1>
+  <span class="tag">CLEAN · TRUSTWORTHY · CASH-APP DNA</span>
+  <p>Calm neutral canvas, white cards, generous spacing, one confident indigo accent and tabular numerals. Reads as a serious money tool people instantly trust. Per-person accent colors do the social work without noise. Risk: can feel a touch generic / "every fintech app" if not given a distinctive signature.</p>
+</div>
+
+<div class="gallery">
+
+  <!-- HOME -->
+  <div class="screen">
+    <div class="label">Home</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div><div class="small muted">Welcome back</div><h2>Split a bill</h2></div><div class="icon-btn">👤</div></div>
+      <button class="cta">📷 Snap a receipt</button>
+      <button class="cta ghost">✏️ Enter manually</button>
+      <div class="card">
+        <div class="row"><b class="small">Recent bills</b><span class="small muted">See all</span></div>
+        <div style="margin-top:6px">
+          <div class="hist"><div class="hbadge">T14</div><div style="flex:1"><div style="font-weight:600">Taverna 14</div><div class="small muted">May 28 · 4 people</div></div><div class="price">$128.14</div></div>
+          <div class="hist"><div class="hbadge" style="background:var(--green-soft);color:var(--green)">SG</div><div style="flex:1"><div style="font-weight:600">Sushi Go</div><div class="small muted">May 21 · 3 people</div></div><div class="price">$84.00</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row"><b class="small">Saved friends</b><span class="small muted">Manage</span></div>
+        <div class="av-row"><div class="av a">A</div><div class="av s">S</div><div class="av j">J</div><div class="av add">＋</div></div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="tabbar"><span class="on">🏠 Home</span><span>🧾 Bills</span><span>👥 Friends</span></div>
+    </div></div>
+  </div>
+
+  <!-- CAPTURE -->
+  <div class="screen">
+    <div class="label">Capture / OCR</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">✕</div><h2 style="font-size:16px">Scan receipt</h2><div class="icon-btn">⚡</div></div>
+      <div class="scanview"><div class="frame"></div><div class="scanline"></div></div>
+      <div class="card">
+        <div class="row"><b class="small">Reading on-device…</b><span class="small muted">6 / 9 lines</span></div>
+        <div class="pgwrap"><i></i></div>
+        <div class="row" style="margin-top:12px"><span class="small muted">🔒 Florence-2 · nothing uploaded</span></div>
+      </div>
+      <button class="cta ghost">Enter manually instead</button>
+      <div style="flex:1"></div>
+    </div></div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="screen">
+    <div class="label">Review &amp; Fix</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><div style="text-align:center"><h2 style="font-size:17px">Taverna 14</h2><div class="small muted">Check the items</div></div><div class="icon-btn">＋</div></div>
+      <div class="card scroll" style="flex:1">
+        <div class="item"><div style="display:flex;gap:10px;align-items:center"><span class="qty">1</span><span>Margherita Pizza</span></div><span class="price">$18.00</span></div>
+        <div class="item"><div style="display:flex;gap:10px;align-items:center"><span class="qty">1</span><span>Carbonara</span></div><span class="price">$22.00</span></div>
+        <div class="item"><div style="display:flex;gap:10px;align-items:center"><span class="qty">1</span><span>Caesar Salad</span></div><span class="price">$14.00</span></div>
+        <div class="item"><div style="display:flex;gap:10px;align-items:center"><span class="qty">1</span><span>Tiramisu</span></div><span class="price">$9.00</span></div>
+        <div class="item"><div style="display:flex;gap:10px;align-items:center"><span class="qty">1</span><span>House Red (bottle)</span></div><span class="price">$32.00</span></div>
+        <div class="item"><div style="display:flex;gap:10px;align-items:center"><span class="qty">1</span><span>Sparkling Water</span></div><span class="price">$6.00</span></div>
+      </div>
+      <div class="card">
+        <div class="row"><span class="muted small">Subtotal</span><span class="price small">$101.00</span></div>
+        <div class="row"><span class="muted small">Tax 8.875%</span><span class="price small">$8.96</span></div>
+        <div class="row"><span class="muted small">Tip 18%</span><span class="price small">$18.18</span></div>
+        <div class="row" style="margin-top:10px"><b>Total</b><b class="price">$128.14</b></div>
+      </div>
+      <button class="cta">Assign items →</button>
+    </div></div>
+  </div>
+
+  <!-- ASSIGN -->
+  <div class="screen">
+    <div class="label">Assign to People</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><h2 style="font-size:17px">Who had what?</h2><div class="icon-btn">✓</div></div>
+      <div class="card">
+        <div class="row"><b class="small">Diners</b><span class="small muted">Tap a name on each item</span></div>
+        <div class="av-row"><div class="av a">A</div><div class="av s">S</div><div class="av j">J</div><div class="av y">Y</div><div class="av add">＋</div></div>
+      </div>
+      <div class="card scroll" style="flex:1">
+        <div style="padding-bottom:12px;border-bottom:1px solid var(--line)">
+          <div class="row"><span style="font-weight:600">Margherita Pizza</span><span class="price">$18.00</span></div>
+          <div class="av-row"><div class="av a sm">A</div><div class="av sm" style="background:#e2e8f0;color:#94a3b8">S</div><div class="av sm" style="background:#e2e8f0;color:#94a3b8">J</div><div class="av sm" style="background:#e2e8f0;color:#94a3b8">Y</div></div>
+        </div>
+        <div style="padding:12px 0;border-bottom:1px solid var(--line)">
+          <div class="row"><span style="font-weight:600">House Red (bottle)</span><span class="price">$32.00</span></div>
+          <div class="av-row"><div class="av a sm">A</div><div class="av s sm">S</div><div class="av j sm">J</div><div class="av y sm">Y</div></div>
+          <div class="tag-pill" style="margin-top:8px;display:inline-block;background:var(--accent-soft);color:var(--accent)">↔ Split 4 ways · $8.00 each</div>
+        </div>
+        <div style="padding-top:12px">
+          <div class="row"><span style="font-weight:600">Tiramisu</span><span class="price">$9.00</span></div>
+          <div class="av-row"><div class="av sm" style="background:#e2e8f0;color:#94a3b8">A</div><div class="av sm" style="background:#e2e8f0;color:#94a3b8">S</div><div class="av sm" style="background:#e2e8f0;color:#94a3b8">J</div><div class="av y sm">Y</div></div>
+        </div>
+      </div>
+      <button class="cta">See the split →</button>
+    </div></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen">
+    <div class="label">Results / Settle</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><h2 style="font-size:17px">The split</h2><div class="icon-btn">⤴</div></div>
+      <div class="card" style="text-align:center">
+        <div class="small muted">You're owed</div>
+        <div class="big-amt" style="color:var(--green)">$98.97</div>
+        <div class="small muted">from 3 people · Taverna 14</div>
+      </div>
+      <div class="card scroll" style="flex:1">
+        <div class="owe-card"><div class="av a">A</div><div style="flex:1"><div style="font-weight:600">Alex</div><div class="small muted">pizza + wine</div></div><b class="price">$33.00</b></div>
+        <div class="owe-card"><div class="av s">S</div><div style="flex:1"><div style="font-weight:600">Sam</div><div class="small muted">carbonara + wine</div></div><b class="price">$38.06</b></div>
+        <div class="owe-card"><div class="av j">J</div><div style="flex:1"><div style="font-weight:600">Jordan</div><div class="small muted">salad + wine</div></div><b class="price">$27.91</b></div>
+        <div class="owe-card you-row"><div class="av y">Y</div><div style="flex:1"><div style="font-weight:600">You <span class="tag-pill" style="background:var(--green);color:#fff">paid</span></div><div class="small muted">your share</div></div><b class="price">$29.18</b></div>
+      </div>
+      <button class="cta">📤 Share split link</button>
+    </div></div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SplitBill — Design 5: Hybrid (Recommended)</title>
+<style>
+  :root{
+    --bg:#f1f3f7; --card:#ffffff; --ink:#101727; --muted:#697587; --line:#e8ecf3;
+    --brand:#4f46e5; --brand-soft:#eef0fe; --green:#15a05a; --green-soft:#e7f6ee;
+    /* per-friend palette */
+    --p-a:#ef4444; --p-s:#f59e0b; --p-j:#0ea5e9; --p-y:#4f46e5;
+    /* receipt flourish */
+    --paper:#f6f1e7; --paper-ink:#2b2620; --paper-line:#cbc2af;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'Segoe UI',Inter,system-ui,sans-serif;background:#d9dee8;color:var(--ink);
+    padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .doc-head{max-width:1100px;margin:0 auto 30px}
+  .doc-head h1{font-size:26px;letter-spacing:-.5px}
+  .doc-head .tag{display:inline-block;margin-top:10px;background:var(--brand);color:#fff;
+    padding:5px 12px;font-size:12px;font-weight:600;border-radius:20px}
+  .doc-head .tag.rec{background:var(--green);margin-left:6px}
+  .doc-head p{margin-top:14px;max-width:720px;line-height:1.6;color:#3c4658;font-size:14px}
+  .legend{max-width:1100px;margin:14px auto 0;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#3c4658}
+  .legend b{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+  .dot{width:12px;height:12px;border-radius:4px;display:inline-block}
+  .gallery{display:flex;gap:26px;overflow-x:auto;padding:18px 0 30px;max-width:1100px;margin:0 auto;scroll-snap-type:x mandatory}
+  .screen{flex:0 0 320px;scroll-snap-align:center}
+  .label{color:#3c4658;font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:10px;text-align:center}
+  .phone{background:var(--bg);border-radius:34px;padding:14px;box-shadow:0 24px 50px rgba(16,23,39,.28);height:670px;overflow:hidden;display:flex;flex-direction:column}
+  .scr{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:13px}
+  .status{display:flex;justify-content:space-between;font-size:12px;font-weight:600;padding:2px 8px}
+  .topbar{display:flex;align-items:center;justify-content:space-between}
+  .topbar h2{font-size:19px;letter-spacing:-.3px}
+  .icon-btn{width:36px;height:36px;border-radius:12px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 1px 3px rgba(16,23,39,.06)}
+  .card{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 1px 3px rgba(16,23,39,.05)}
+  .cta{background:var(--brand);color:#fff;border:none;border-radius:16px;padding:16px;width:100%;font-size:15px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 8px 20px rgba(79,70,229,.28)}
+  .cta.ghost{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(16,23,39,.06)}
+  .muted{color:var(--muted)} .small{font-size:12px}
+  .mono{font-variant-numeric:tabular-nums}
+  .row{display:flex;justify-content:space-between;align-items:center}
+  .hist{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .hist:last-child{border:none}
+  .hbadge{width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--brand-soft)}
+  .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px}
+  .av.sm{width:26px;height:26px;font-size:11px} .av.lg{width:40px;height:40px;font-size:15px}
+  .av.a{background:var(--p-a)}.av.s{background:var(--p-s)}.av.j{background:var(--p-j)}.av.y{background:var(--p-y)}
+  .av.off{background:#e2e8f0;color:#94a3b8}
+  .av.add{background:var(--card);color:var(--muted);border:1.5px dashed #cdd5e1}
+  .av-row{display:flex;gap:8px;margin-top:10px}
+  .big-amt{font-size:34px;font-weight:700;letter-spacing:-1px}
+  .scanview{flex:1;background:#0f172a;border-radius:20px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .frame{width:78%;height:60%;border:2px solid rgba(255,255,255,.6);border-radius:14px;position:relative}
+  .frame span{position:absolute;width:22px;height:22px;border:3px solid var(--brand)}
+  .c1{top:-2px;left:-2px;border-right:none;border-bottom:none;border-radius:8px 0 0 0}
+  .c4{bottom:-2px;right:-2px;border-left:none;border-top:none;border-radius:0 0 8px 0}
+  .scanline{position:absolute;left:8%;right:8%;height:2px;background:var(--brand);top:46%;box-shadow:0 0 16px 2px var(--brand)}
+  .pgwrap{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:10px}
+  .pgwrap i{display:block;height:100%;width:64%;background:var(--brand);border-radius:6px}
+  .item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line)}
+  .item:last-child{border:none}
+  .price{font-weight:600}
+  .scroll{overflow-y:auto;flex:1}
+  .chip{font-size:11px;font-weight:600;padding:4px 9px;border-radius:10px;border:1px solid var(--line);color:var(--muted);background:var(--card)}
+  .chip.a{background:var(--p-a);color:#fff;border-color:transparent}
+  .chip.s{background:var(--p-s);color:#fff;border-color:transparent}
+  .chip.j{background:var(--p-j);color:#fff;border-color:transparent}
+  .chip.y{background:var(--p-y);color:#fff;border-color:transparent}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .share-pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:var(--brand-soft);color:var(--brand)}
+  .tabbar{display:flex;justify-content:space-around;padding-top:8px;border-top:1px solid var(--line);color:var(--muted);font-size:11px}
+  .tabbar .on{color:var(--brand)}
+  .seg{display:flex;background:var(--bg);border-radius:12px;padding:3px}
+  .seg span{flex:1;text-align:center;font-size:12px;font-weight:600;padding:7px;border-radius:9px;color:var(--muted)}
+  .seg span.on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  /* ----- receipt flourish (results) ----- */
+  .receipt{background:var(--paper);color:var(--paper-ink);font-family:'Courier New',monospace;
+    border-radius:8px;padding:18px 16px 4px;position:relative;
+    box-shadow:0 2px 8px rgba(16,23,39,.10);
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 25px,rgba(0,0,0,.018) 26px)}
+  .receipt::before,.receipt::after{content:"";position:absolute;left:0;right:0;height:10px;
+    background:radial-gradient(circle at 5px 0,transparent 0 5px,var(--paper) 5px) repeat-x;background-size:10px 10px}
+  .receipt::before{top:-9px;transform:rotate(180deg)} .receipt::after{bottom:-9px}
+  .receipt .center{text-align:center}
+  .receipt .brand{font-weight:700;letter-spacing:3px;font-size:15px}
+  .receipt .sub{font-size:10px;color:#7a715f;letter-spacing:1px;margin-top:2px}
+  .receipt .rdash{border-top:1px dashed var(--paper-line);margin:11px 0}
+  .receipt .rrow{display:flex;justify-content:space-between;align-items:center;font-size:13px;line-height:1.85}
+  .receipt .who{display:flex;align-items:center;gap:8px}
+  .receipt .tick{width:12px;height:12px;border-radius:3px}
+  .receipt .total{font-weight:700;font-size:15px}
+  .receipt .owe-amt{font-weight:700}
+  .receipt .barcode{height:34px;margin:12px 0 4px;background:repeating-linear-gradient(90deg,#2b2620 0 2px,transparent 2px 4px,#2b2620 4px 5px,transparent 5px 9px)}
+</style>
+</head>
+<body>
+<div class="doc-head">
+  <h1>⑤ HYBRID</h1>
+  <span class="tag">FINTECH STRUCTURE + FRIEND COLORS</span><span class="tag rec">★ RECOMMENDED</span>
+  <p>The synthesis: Modern Fintech's calm, trustworthy structure and tabular numerals as the backbone; Playful Social's <b>per-friend color system</b> carried consistently across every screen so you read the split at a glance; and a <b>Receipt-Native flourish</b> reserved for the results screen as a signature, shareable moment. Serious about money where it counts, delightful where it can be.</p>
+</div>
+<div class="legend">
+  <b><span class="dot" style="background:var(--p-a)"></span>Alex</b>
+  <b><span class="dot" style="background:var(--p-s)"></span>Sam</b>
+  <b><span class="dot" style="background:var(--p-j)"></span>Jordan</b>
+  <b><span class="dot" style="background:var(--p-y)"></span>You</b>
+  <span class="muted">— each friend keeps their color across capture, assign, and results.</span>
+</div>
+
+<div class="gallery">
+
+  <!-- HOME -->
+  <div class="screen">
+    <div class="label">Home</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div><div class="small muted">Welcome back</div><h2>Split a bill</h2></div><div class="av y lg">H</div></div>
+      <button class="cta">📷 Snap a receipt</button>
+      <button class="cta ghost">✏️ Enter manually</button>
+      <div class="card">
+        <div class="row"><b class="small">Recent bills</b><span class="small muted">See all</span></div>
+        <div style="margin-top:4px">
+          <div class="hist"><div class="hbadge">🍝</div><div style="flex:1"><div style="font-weight:600">Taverna 14</div><div class="small muted">4 people · May 28</div></div><div class="price mono">$128.14</div></div>
+          <div class="hist"><div class="hbadge" style="background:var(--green-soft)">🍣</div><div style="flex:1"><div style="font-weight:600">Sushi Go</div><div class="small muted">3 people · May 21</div></div><div class="price mono">$84.00</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row"><b class="small">Saved friends</b><span class="small muted">Manage</span></div>
+        <div class="av-row"><div class="av a">A</div><div class="av s">S</div><div class="av j">J</div><div class="av add">＋</div></div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="tabbar"><span class="on">🏠 Home</span><span>🧾 Bills</span><span>👥 Friends</span></div>
+    </div></div>
+  </div>
+
+  <!-- CAPTURE -->
+  <div class="screen">
+    <div class="label">Capture / OCR</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">✕</div><h2 style="font-size:16px">Scan receipt</h2><div class="icon-btn">⚡</div></div>
+      <div class="scanview"><div class="frame"><span class="c1"></span><span class="c4"></span></div><div class="scanline"></div></div>
+      <div class="card">
+        <div class="row"><b class="small">Reading on-device…</b><span class="small muted mono">6 / 9 lines</span></div>
+        <div class="pgwrap"><i></i></div>
+        <div class="small muted" style="margin-top:11px">🔒 Florence-2 · nothing leaves your phone</div>
+      </div>
+      <button class="cta ghost">Enter manually instead</button>
+      <div style="flex:1"></div>
+    </div></div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="screen">
+    <div class="label">Review &amp; Fix</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><div style="text-align:center"><h2 style="font-size:16px">Taverna 14</h2><div class="small muted">Check the items</div></div><div class="icon-btn">＋</div></div>
+      <div class="card scroll" style="flex:1">
+        <div class="item"><span>Margherita Pizza</span><span class="price mono">$18.00</span></div>
+        <div class="item"><span>Carbonara</span><span class="price mono">$22.00</span></div>
+        <div class="item"><span>Caesar Salad</span><span class="price mono">$14.00</span></div>
+        <div class="item"><span>Tiramisu</span><span class="price mono">$9.00</span></div>
+        <div class="item"><span>House Red (bottle)</span><span class="price mono">$32.00</span></div>
+        <div class="item"><span>Sparkling Water</span><span class="price mono">$6.00</span></div>
+      </div>
+      <div class="card">
+        <div class="row small"><span class="muted">Subtotal</span><span class="mono">$101.00</span></div>
+        <div class="row small" style="margin-top:6px"><span class="muted">Tax 8.875%</span><span class="mono">$8.96</span></div>
+        <div class="row small" style="margin-top:6px"><span class="muted">Tip 18%</span><span class="mono">$18.18</span></div>
+        <div class="row" style="margin-top:9px"><b>Total</b><b class="price mono">$128.14</b></div>
+      </div>
+      <button class="cta">Assign items →</button>
+    </div></div>
+  </div>
+
+  <!-- ASSIGN -->
+  <div class="screen">
+    <div class="label">Assign to People</div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><h2 style="font-size:16px">Who had what?</h2><div class="icon-btn">✓</div></div>
+      <div class="card">
+        <div class="seg"><span class="on">Tap to assign</span><span>Split evenly</span></div>
+        <div class="av-row"><div class="av a">A</div><div class="av s">S</div><div class="av j">J</div><div class="av y">Y</div><div class="av add">＋</div></div>
+      </div>
+      <div class="card scroll" style="flex:1">
+        <div style="padding-bottom:12px;border-bottom:1px solid var(--line)">
+          <div class="row"><span style="font-weight:600">Margherita Pizza</span><span class="price mono">$18.00</span></div>
+          <div class="chips"><span class="chip a">Alex</span><span class="chip">Sam</span><span class="chip">Jordan</span><span class="chip">You</span></div>
+        </div>
+        <div style="padding:12px 0;border-bottom:1px solid var(--line)">
+          <div class="row"><span style="font-weight:600">House Red (bottle)</span><span class="price mono">$32.00</span></div>
+          <div class="chips"><span class="chip a">Alex</span><span class="chip s">Sam</span><span class="chip j">Jordan</span><span class="chip y">You</span></div>
+          <div class="small" style="margin-top:8px;color:var(--brand);font-weight:600">↔ Split 4 ways · $8.00 each</div>
+        </div>
+        <div style="padding-top:12px">
+          <div class="row"><span style="font-weight:600">Tiramisu</span><span class="price mono">$9.00</span></div>
+          <div class="chips"><span class="chip">Alex</span><span class="chip">Sam</span><span class="chip">Jordan</span><span class="chip y">You</span></div>
+        </div>
+      </div>
+      <button class="cta">See the split →</button>
+    </div></div>
+  </div>
+
+  <!-- RESULTS (receipt flourish) -->
+  <div class="screen">
+    <div class="label">Results / Settle <span class="muted">— receipt flourish</span></div>
+    <div class="phone"><div class="scr">
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><h2 style="font-size:16px">The split</h2><div class="icon-btn">⤴</div></div>
+      <div class="card" style="text-align:center;padding:14px">
+        <div class="small muted">You're owed</div>
+        <div class="big-amt" style="color:var(--green)">$98.97</div>
+        <div class="small muted">from 3 people</div>
+      </div>
+      <div class="scroll" style="flex:1;padding:4px 2px">
+        <div class="receipt">
+          <div class="center"><div class="brand">SPLITBILL</div><div class="sub">TAVERNA 14 · 4 GUESTS · MAY 28</div></div>
+          <div class="rdash"></div>
+          <div class="rrow"><span class="who"><span class="tick" style="background:var(--p-a)"></span>Alex</span><span class="owe-amt mono">$33.00</span></div>
+          <div class="sub" style="margin:-4px 0 6px 20px">pizza + wine</div>
+          <div class="rrow"><span class="who"><span class="tick" style="background:var(--p-s)"></span>Sam</span><span class="owe-amt mono">$38.06</span></div>
+          <div class="sub" style="margin:-4px 0 6px 20px">carbonara + wine</div>
+          <div class="rrow"><span class="who"><span class="tick" style="background:var(--p-j)"></span>Jordan</span><span class="owe-amt mono">$27.91</span></div>
+          <div class="sub" style="margin:-4px 0 6px 20px">salad + wine</div>
+          <div class="rrow"><span class="who"><span class="tick" style="background:var(--p-y)"></span>You <span class="share-pill" style="background:#dfeee5;color:#15803d">PAID</span></span><span class="owe-amt mono">$29.18</span></div>
+          <div class="sub" style="margin:-4px 0 6px 20px">tiramisu + water + share</div>
+          <div class="rdash"></div>
+          <div class="rrow total"><span>TOTAL</span><span class="mono">$128.14</span></div>
+          <div class="center sub" style="margin-top:8px">ALEX, SAM &amp; JORDAN OWE YOU</div>
+          <div class="barcode"></div>
+          <div class="center sub" style="padding-bottom:8px">THANK YOU · SETTLE UP ANY WAY YOU LIKE</div>
+        </div>
+      </div>
+      <button class="cta">📤 Share split link</button>
+    </div></div>
+  </div>
+
+</div>
+</body>
+</html>

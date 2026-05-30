@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SplitBill — Design 1: Receipt Native</title>
+<style>
+  :root{
+    --paper:#f4efe3; --ink:#2b2620; --faint:#8a8170; --line:#c9c0ad;
+    --accent:#c0392b; --accent2:#1f6f54;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Courier New',ui-monospace,monospace;background:#3a352d;color:var(--ink);
+    padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .doc-head{max-width:1100px;margin:0 auto 36px;color:#e9e2d2;font-family:'Courier New',monospace}
+  .doc-head h1{font-size:26px;letter-spacing:1px}
+  .doc-head .tag{display:inline-block;margin-top:8px;border:1px solid #6b6354;padding:4px 10px;font-size:12px;color:#cfc6b3}
+  .doc-head p{margin-top:14px;max-width:680px;line-height:1.6;color:#bdb39e;font-size:14px}
+  .gallery{display:flex;gap:28px;overflow-x:auto;padding:10px 0 30px;max-width:1100px;margin:0 auto;
+    scroll-snap-type:x mandatory}
+  .screen{flex:0 0 320px;scroll-snap-align:center}
+  .label{color:#cfc6b3;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;text-align:center}
+  /* paper receipt */
+  .paper{background:var(--paper);position:relative;padding:22px 20px 26px;
+    box-shadow:0 18px 40px rgba(0,0,0,.45);
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(0,0,0,.02) 28px);}
+  .paper::before,.paper::after{content:"";position:absolute;left:0;right:0;height:12px;
+    background:radial-gradient(circle at 6px 0,transparent 0 6px,var(--paper) 6px) repeat-x;
+    background-size:12px 12px}
+  .paper::before{top:-11px;transform:rotate(180deg)}
+  .paper::after{bottom:-11px}
+  .center{text-align:center}
+  .brand{font-weight:700;font-size:20px;letter-spacing:3px}
+  .sub{font-size:11px;color:var(--faint);letter-spacing:1px;margin-top:3px}
+  .dash{border-top:1px dashed var(--line);margin:14px 0}
+  .row{display:flex;justify-content:space-between;font-size:13px;line-height:1.9}
+  .row .muted{color:var(--faint)}
+  .big{font-size:15px;font-weight:700}
+  .btn{display:block;width:100%;text-align:center;background:var(--ink);color:var(--paper);
+    padding:13px;font-weight:700;letter-spacing:2px;font-size:13px;border:none;margin-top:16px;cursor:pointer}
+  .btn.alt{background:var(--paper);color:var(--ink);border:2px dashed var(--ink)}
+  .stamp{display:inline-block;border:2px solid var(--accent);color:var(--accent);
+    padding:3px 8px;font-size:11px;font-weight:700;transform:rotate(-4deg);letter-spacing:1px}
+  .barcode{height:42px;margin-top:14px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 9px);}
+  .scan-box{height:150px;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;
+    flex-direction:column;color:var(--faint);font-size:12px;text-align:center;gap:8px;margin:6px 0}
+  .scan-ico{font-size:34px}
+  .progress{height:8px;background:#ded5c2;margin-top:10px;position:relative;overflow:hidden}
+  .progress i{position:absolute;left:0;top:0;bottom:0;width:62%;background:var(--accent2)}
+  .chip{display:inline-block;border:1px solid var(--line);padding:3px 8px;font-size:11px;margin:3px 3px 0 0}
+  .chip.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .who{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .ava{width:26px;height:26px;border:1.5px solid var(--ink);border-radius:50%;display:flex;
+    align-items:center;justify-content:center;font-size:11px;font-weight:700}
+  .item-edit{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:6px 0;border-bottom:1px dotted var(--line)}
+  .price-tag{font-weight:700}
+  .owe{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+  .owe b{font-size:16px;color:var(--accent)}
+  .pill{font-size:10px;border:1px solid var(--accent2);color:var(--accent2);padding:2px 6px;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="doc-head">
+  <h1>① RECEIPT NATIVE</h1>
+  <span class="tag">SKEUOMORPHIC · THERMAL PAPER · TACTILE</span>
+  <p>Leans all the way into the receipt metaphor: warm thermal-printer paper, monospace ink, perforated edges, dashed rules and a faux barcode. The whole app *is* a receipt. Maximum charm and instantly legible to anyone who's ever split a check — risk is it can feel gimmicky and harder to make dense screens scan well.</p>
+</div>
+
+<div class="gallery">
+
+  <!-- HOME -->
+  <div class="screen">
+    <div class="label">Home</div>
+    <div class="paper">
+      <div class="center">
+        <div class="brand">SPLITBILL</div>
+        <div class="sub">EST. THE NEXT DINNER</div>
+      </div>
+      <div class="dash"></div>
+      <div class="row"><span class="muted">GUEST</span><span>You</span></div>
+      <div class="row"><span class="muted">TABLE</span><span>Solo / Organizer</span></div>
+      <div class="dash"></div>
+      <div class="row big"><span>NEW BILL</span><span>→</span></div>
+      <button class="btn">＋ SNAP A RECEIPT</button>
+      <button class="btn alt">✎ ENTER MANUALLY</button>
+      <div class="dash"></div>
+      <div class="label" style="color:var(--faint);text-align:left;margin:0 0 6px">RECENT</div>
+      <div class="row"><span>Taverna 14</span><span class="muted">$128.14</span></div>
+      <div class="row"><span>Sushi Go</span><span class="muted">$84.00</span></div>
+      <div class="barcode"></div>
+      <div class="center sub" style="margin-top:6px">SAVE FRIENDS · KEEP HISTORY · SIGN IN ▸</div>
+    </div>
+  </div>
+
+  <!-- CAPTURE -->
+  <div class="screen">
+    <div class="label">Capture / OCR</div>
+    <div class="paper">
+      <div class="center"><span class="stamp">SCANNING</span></div>
+      <div class="dash"></div>
+      <div class="scan-box">
+        <div class="scan-ico">🧾</div>
+        <div>Hold the receipt flat<br>inside the frame</div>
+      </div>
+      <div class="row"><span class="muted">on-device OCR</span><span>Florence-2</span></div>
+      <div class="progress"><i></i></div>
+      <div class="center sub" style="margin-top:8px">READING 6 OF 9 LINES…</div>
+      <div class="dash"></div>
+      <div class="row" style="font-size:12px"><span>Margherita Pizza</span><span class="price-tag">18.00</span></div>
+      <div class="row" style="font-size:12px"><span>Carbonara</span><span class="price-tag">22.00</span></div>
+      <div class="row" style="font-size:12px;color:var(--faint)"><span>Caesar Sa▮ad…</span><span>—</span></div>
+      <button class="btn alt">⏻ NEVER LEAVES YOUR PHONE</button>
+    </div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="screen">
+    <div class="label">Review &amp; Fix</div>
+    <div class="paper">
+      <div class="center"><div class="brand" style="font-size:16px">TAVERNA 14</div><div class="sub">REVIEW ITEMS · TAP TO EDIT</div></div>
+      <div class="dash"></div>
+      <div class="item-edit"><span>Margherita Pizza</span><span class="price-tag">$18.00</span></div>
+      <div class="item-edit"><span>Carbonara</span><span class="price-tag">$22.00</span></div>
+      <div class="item-edit"><span>Caesar Salad</span><span class="price-tag">$14.00</span></div>
+      <div class="item-edit"><span>Tiramisu</span><span class="price-tag">$9.00</span></div>
+      <div class="item-edit"><span>House Red (btl)</span><span class="price-tag">$32.00</span></div>
+      <div class="item-edit"><span>Sparkling Water</span><span class="price-tag">$6.00</span></div>
+      <div class="dash"></div>
+      <div class="row"><span class="muted">SUBTOTAL</span><span>$101.00</span></div>
+      <div class="row"><span class="muted">TAX 8.875%</span><span>$8.96</span></div>
+      <div class="row"><span class="muted">TIP 18%</span><span>$18.18</span></div>
+      <div class="row big"><span>TOTAL</span><span>$128.14</span></div>
+      <button class="btn">LOOKS RIGHT → ASSIGN</button>
+    </div>
+  </div>
+
+  <!-- ASSIGN -->
+  <div class="screen">
+    <div class="label">Assign to People</div>
+    <div class="paper">
+      <div class="center"><div class="sub">WHO HAD WHAT?</div></div>
+      <div class="who center" style="justify-content:center">
+        <span class="ava">A</span><span class="ava">S</span><span class="ava">J</span>
+        <span class="ava" style="background:var(--ink);color:var(--paper)">Y</span>
+        <span class="ava" style="border-style:dashed">＋</span>
+      </div>
+      <div class="dash"></div>
+      <div class="item-edit" style="display:block;border-bottom:1px dashed var(--line)">
+        <div style="display:flex;justify-content:space-between"><b>Margherita Pizza</b><span class="price-tag">$18.00</span></div>
+        <div class="who"><span class="chip on">Alex</span><span class="chip">Sam</span><span class="chip">Jordan</span><span class="chip">You</span></div>
+      </div>
+      <div class="item-edit" style="display:block;border-bottom:1px dashed var(--line)">
+        <div style="display:flex;justify-content:space-between"><b>House Red (btl)</b><span class="price-tag">$32.00</span></div>
+        <div class="who"><span class="chip on">Alex</span><span class="chip on">Sam</span><span class="chip on">Jordan</span><span class="chip on">You</span></div>
+        <div class="sub" style="margin-top:4px">↔ SPLIT 4 WAYS · $8.00 EACH</div>
+      </div>
+      <div class="item-edit" style="display:block">
+        <div style="display:flex;justify-content:space-between"><b>Tiramisu</b><span class="price-tag">$9.00</span></div>
+        <div class="who"><span class="chip">Alex</span><span class="chip">Sam</span><span class="chip">Jordan</span><span class="chip on">You</span></div>
+      </div>
+      <button class="btn">DONE → SPLIT IT</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen">
+    <div class="label">Results / Settle</div>
+    <div class="paper">
+      <div class="center"><div class="brand" style="font-size:16px">THE DAMAGE</div><div class="sub">TAVERNA 14 · 4 GUESTS</div></div>
+      <div class="dash"></div>
+      <div class="owe"><span>Alex <span class="pill">pizza+wine</span></span><b>$33.00</b></div>
+      <div class="owe"><span>Sam <span class="pill">carbonara+wine</span></span><b>$38.06</b></div>
+      <div class="owe"><span>Jordan <span class="pill">salad+wine</span></span><b>$27.91</b></div>
+      <div class="owe" style="border-bottom:none"><span>You <span class="pill">paid · tiramisu+water</span></span><b style="color:var(--accent2)">$29.18</b></div>
+      <div class="dash"></div>
+      <div class="row big"><span>TOTAL</span><span>$128.14</span></div>
+      <div class="center sub" style="margin-top:6px">ALEX, SAM &amp; JORDAN OWE YOU</div>
+      <button class="btn">📤 SHARE THE BILL</button>
+      <button class="btn alt">⧉ COPY LINK</button>
+      <div class="barcode"></div>
+      <div class="center sub" style="margin-top:6px">THANK YOU · COME AGAIN</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

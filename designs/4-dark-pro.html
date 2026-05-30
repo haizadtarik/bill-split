@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SplitBill — Design 4: Dark Pro / Glass</title>
+<style>
+  :root{
+    --bg:#0a0e14; --panel:rgba(255,255,255,.05); --stroke:rgba(255,255,255,.10);
+    --ink:#eaf0f7; --muted:#7d8aa0; --neon:#39e6a8; --neon2:#5b9dff; --amber:#ffb547;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',-apple-system,system-ui,sans-serif;background:#05070b;color:var(--ink);
+    padding:40px 20px;-webkit-font-smoothing:antialiased}
+  .doc-head{max-width:1100px;margin:0 auto 36px}
+  .doc-head h1{font-size:26px;letter-spacing:-.5px}
+  .doc-head .tag{display:inline-block;margin-top:10px;border:1px solid var(--stroke);color:var(--neon);
+    padding:5px 12px;font-size:12px;font-weight:600;border-radius:20px;background:rgba(57,230,168,.08)}
+  .doc-head p{margin-top:14px;max-width:680px;line-height:1.6;color:var(--muted);font-size:14px}
+  .gallery{display:flex;gap:26px;overflow-x:auto;padding:10px 0 30px;max-width:1100px;margin:0 auto;scroll-snap-type:x mandatory}
+  .screen{flex:0 0 320px;scroll-snap-align:center}
+  .label{color:#9fb0c8;font-size:12px;font-weight:600;letter-spacing:.5px;margin-bottom:10px;text-align:center}
+  .phone{background:linear-gradient(165deg,#11161f,#0a0e14);border-radius:36px;padding:14px;height:660px;overflow:hidden;
+    display:flex;flex-direction:column;border:1px solid var(--stroke);
+    box-shadow:0 24px 60px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.02)}
+  .scr{flex:1;overflow:hidden;display:flex;flex-direction:column;gap:12px;position:relative}
+  .glow{position:absolute;width:200px;height:200px;border-radius:50%;filter:blur(60px);opacity:.4;z-index:0}
+  .glow.g1{background:var(--neon);top:-40px;right:-40px}
+  .glow.g2{background:var(--neon2);bottom:40px;left:-60px;opacity:.25}
+  .scr>*{position:relative;z-index:1}
+  .status{display:flex;justify-content:space-between;font-size:12px;font-weight:600;padding:2px 6px;color:var(--muted)}
+  .topbar{display:flex;align-items:center;justify-content:space-between}
+  .topbar h2{font-size:19px;letter-spacing:-.3px}
+  .muted{color:var(--muted)}
+  .small{font-size:12px}
+  .glass{background:var(--panel);border:1px solid var(--stroke);border-radius:18px;padding:16px;backdrop-filter:blur(12px)}
+  .icon-btn{width:36px;height:36px;border-radius:11px;background:var(--panel);border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center;font-size:15px}
+  .cta{border:none;border-radius:14px;padding:15px;width:100%;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;
+    background:linear-gradient(90deg,var(--neon),var(--neon2));color:#04130d;display:flex;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 8px 24px rgba(57,230,168,.30)}
+  .cta.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--stroke);box-shadow:none}
+  .row{display:flex;justify-content:space-between;align-items:center}
+  .mono{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .av{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#05070b}
+  .av.a{background:#ff6b6b}.av.s{background:var(--amber)}.av.j{background:var(--neon2)}.av.y{background:var(--neon)}
+  .av.sm{width:26px;height:26px;font-size:11px;border-radius:8px}
+  .av.off{background:rgba(255,255,255,.08);color:var(--muted)}
+  .av.add{background:transparent;border:1px dashed var(--stroke);color:var(--muted)}
+  .av-row{display:flex;gap:8px;margin-top:10px}
+  .hist{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--stroke)}
+  .hist:last-child{border:none}
+  .hicon{width:38px;height:38px;border-radius:11px;background:rgba(91,157,255,.12);border:1px solid var(--stroke);display:flex;align-items:center;justify-content:center;font-size:16px}
+  .scanview{flex:1;border-radius:18px;border:1px solid var(--stroke);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(57,230,168,.10),transparent 60%),#070b11}
+  .frame{width:76%;height:58%;border-radius:14px;position:relative}
+  .frame span{position:absolute;width:24px;height:24px;border:2px solid var(--neon)}
+  .c1{top:0;left:0;border-right:none;border-bottom:none;border-radius:8px 0 0 0}
+  .c2{top:0;right:0;border-left:none;border-bottom:none;border-radius:0 8px 0 0}
+  .c3{bottom:0;left:0;border-right:none;border-top:none;border-radius:0 0 0 8px}
+  .c4{bottom:0;right:0;border-left:none;border-top:none;border-radius:0 0 8px 0}
+  .scanline{position:absolute;left:12%;right:12%;height:2px;top:48%;background:var(--neon);box-shadow:0 0 16px 2px var(--neon)}
+  .pgwrap{height:6px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;margin-top:10px}
+  .pgwrap i{display:block;height:100%;width:64%;background:linear-gradient(90deg,var(--neon),var(--neon2))}
+  .item{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--stroke)}
+  .item:last-child{border:none}
+  .price{font-weight:700}
+  .chip{font-size:11px;font-weight:600;padding:4px 9px;border-radius:9px;border:1px solid var(--stroke);color:var(--muted);background:transparent}
+  .chip.a{background:rgba(255,107,107,.16);color:#ff8f8f;border-color:transparent}
+  .chip.s{background:rgba(255,181,71,.16);color:var(--amber);border-color:transparent}
+  .chip.j{background:rgba(91,157,255,.16);color:#8fbaff;border-color:transparent}
+  .chip.y{background:rgba(57,230,168,.16);color:var(--neon);border-color:transparent}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .scroll{overflow-y:auto;flex:1}
+  .tabbar{display:flex;justify-content:space-around;padding-top:8px;border-top:1px solid var(--stroke);color:var(--muted);font-size:11px}
+  .tabbar .on{color:var(--neon)}
+  .owe{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--stroke)}
+  .owe:last-child{border:none}
+  .pill{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(57,230,168,.16);color:var(--neon)}
+  .glowtext{font-size:34px;font-weight:800;letter-spacing:-1px;color:var(--neon);text-shadow:0 0 24px rgba(57,230,168,.5)}
+</style>
+</head>
+<body>
+<div class="doc-head">
+  <h1>④ DARK PRO / GLASS</h1>
+  <span class="tag">DARK · GLASSMORPHIC · NEON</span>
+  <p>Deep navy-black canvas, frosted-glass panels, soft neon glows and tabular numerals. Feels premium and "night out" — dinners happen after dark, and OLED dark mode is easy on the eyes at the table. Power-user density without clutter. Risk: dark UIs need careful contrast for accessibility, and neon can fatigue if overused.</p>
+</div>
+
+<div class="gallery">
+
+  <!-- HOME -->
+  <div class="screen">
+    <div class="label">Home</div>
+    <div class="phone"><div class="scr">
+      <div class="glow g1"></div><div class="glow g2"></div>
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div><div class="small muted">Evening, Haizad</div><h2>Split a bill</h2></div><div class="icon-btn">👤</div></div>
+      <button class="cta">📷 Snap a receipt</button>
+      <button class="cta ghost">✏️ Enter manually</button>
+      <div class="glass">
+        <div class="row"><b class="small">Recent</b><span class="small muted">All</span></div>
+        <div style="margin-top:4px">
+          <div class="hist"><div class="hicon">🍝</div><div style="flex:1"><div style="font-weight:600">Taverna 14</div><div class="small muted">4 people · May 28</div></div><span class="price mono">$128.14</span></div>
+          <div class="hist"><div class="hicon">🍣</div><div style="flex:1"><div style="font-weight:600">Sushi Go</div><div class="small muted">3 people · May 21</div></div><span class="price mono">$84.00</span></div>
+        </div>
+      </div>
+      <div class="glass">
+        <div class="row"><b class="small">Saved friends</b><span class="small muted">Manage</span></div>
+        <div class="av-row"><div class="av a">A</div><div class="av s">S</div><div class="av j">J</div><div class="av add">＋</div></div>
+      </div>
+      <div style="flex:1"></div>
+      <div class="tabbar"><span class="on">Home</span><span>Bills</span><span>Friends</span></div>
+    </div></div>
+  </div>
+
+  <!-- CAPTURE -->
+  <div class="screen">
+    <div class="label">Capture / OCR</div>
+    <div class="phone"><div class="scr">
+      <div class="glow g1"></div>
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">✕</div><h2 style="font-size:16px">Scan receipt</h2><div class="icon-btn">⚡</div></div>
+      <div class="scanview"><div class="frame"><span class="c1"></span><span class="c2"></span><span class="c3"></span><span class="c4"></span></div><div class="scanline"></div></div>
+      <div class="glass">
+        <div class="row"><b class="small">Decoding on-device</b><span class="small muted mono">6 / 9</span></div>
+        <div class="pgwrap"><i></i></div>
+        <div class="small muted" style="margin-top:10px">🔒 Florence-2 · runs locally, nothing uploaded</div>
+      </div>
+      <button class="cta ghost">Enter manually instead</button>
+      <div style="flex:1"></div>
+    </div></div>
+  </div>
+
+  <!-- REVIEW -->
+  <div class="screen">
+    <div class="label">Review &amp; Fix</div>
+    <div class="phone"><div class="scr">
+      <div class="glow g2"></div>
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><div style="text-align:center"><h2 style="font-size:16px">Taverna 14</h2><div class="small muted">Verify items</div></div><div class="icon-btn">＋</div></div>
+      <div class="glass scroll" style="flex:1">
+        <div class="item"><span>Margherita Pizza</span><span class="price mono">$18.00</span></div>
+        <div class="item"><span>Carbonara</span><span class="price mono">$22.00</span></div>
+        <div class="item"><span>Caesar Salad</span><span class="price mono">$14.00</span></div>
+        <div class="item"><span>Tiramisu</span><span class="price mono">$9.00</span></div>
+        <div class="item"><span>House Red (bottle)</span><span class="price mono">$32.00</span></div>
+        <div class="item"><span>Sparkling Water</span><span class="price mono">$6.00</span></div>
+      </div>
+      <div class="glass">
+        <div class="row small"><span class="muted">Subtotal</span><span class="mono">$101.00</span></div>
+        <div class="row small" style="margin-top:6px"><span class="muted">Tax 8.875%</span><span class="mono">$8.96</span></div>
+        <div class="row small" style="margin-top:6px"><span class="muted">Tip 18%</span><span class="mono">$18.18</span></div>
+        <div class="row" style="margin-top:8px"><b>Total</b><b class="price mono" style="color:var(--neon)">$128.14</b></div>
+      </div>
+      <button class="cta">Assign items →</button>
+    </div></div>
+  </div>
+
+  <!-- ASSIGN -->
+  <div class="screen">
+    <div class="label">Assign to People</div>
+    <div class="phone"><div class="scr">
+      <div class="glow g1"></div>
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><h2 style="font-size:16px">Who had what?</h2><div class="icon-btn">✓</div></div>
+      <div class="glass">
+        <div class="row"><b class="small">Diners</b><span class="small muted">Tap names per item</span></div>
+        <div class="av-row"><div class="av a">A</div><div class="av s">S</div><div class="av j">J</div><div class="av y">Y</div><div class="av add">＋</div></div>
+      </div>
+      <div class="glass scroll" style="flex:1">
+        <div style="padding-bottom:12px;border-bottom:1px solid var(--stroke)">
+          <div class="row"><span style="font-weight:600">Margherita Pizza</span><span class="price mono">$18.00</span></div>
+          <div class="chips"><span class="chip a">Alex</span><span class="chip">Sam</span><span class="chip">Jordan</span><span class="chip">You</span></div>
+        </div>
+        <div style="padding:12px 0;border-bottom:1px solid var(--stroke)">
+          <div class="row"><span style="font-weight:600">House Red (bottle)</span><span class="price mono">$32.00</span></div>
+          <div class="chips"><span class="chip a">Alex</span><span class="chip s">Sam</span><span class="chip j">Jordan</span><span class="chip y">You</span></div>
+          <div class="small" style="margin-top:8px;color:var(--neon)">↔ Split 4 ways · $8.00 each</div>
+        </div>
+        <div style="padding-top:12px">
+          <div class="row"><span style="font-weight:600">Tiramisu</span><span class="price mono">$9.00</span></div>
+          <div class="chips"><span class="chip">Alex</span><span class="chip">Sam</span><span class="chip">Jordan</span><span class="chip y">You</span></div>
+        </div>
+      </div>
+      <button class="cta">See the split →</button>
+    </div></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="screen">
+    <div class="label">Results / Settle</div>
+    <div class="phone"><div class="scr">
+      <div class="glow g1"></div><div class="glow g2"></div>
+      <div class="status"><span>9:41</span><span>● ● ●</span></div>
+      <div class="topbar"><div class="icon-btn">‹</div><h2 style="font-size:16px">The split</h2><div class="icon-btn">⤴</div></div>
+      <div class="glass" style="text-align:center">
+        <div class="small muted">You're owed</div>
+        <div class="glowtext mono">$98.97</div>
+        <div class="small muted">from 3 people · Taverna 14</div>
+      </div>
+      <div class="glass scroll" style="flex:1">
+        <div class="owe"><div class="av a">A</div><div style="flex:1"><div style="font-weight:600">Alex</div><div class="small muted">pizza + wine</div></div><b class="price mono">$33.00</b></div>
+        <div class="owe"><div class="av s">S</div><div style="flex:1"><div style="font-weight:600">Sam</div><div class="small muted">carbonara + wine</div></div><b class="price mono">$38.06</b></div>
+        <div class="owe"><div class="av j">J</div><div style="flex:1"><div style="font-weight:600">Jordan</div><div class="small muted">salad + wine</div></div><b class="price mono">$27.91</b></div>
+        <div class="owe"><div class="av y">Y</div><div style="flex:1"><div style="font-weight:600">You <span class="pill">paid</span></div><div class="small muted">your share</div></div><b class="price mono">$29.18</b></div>
+      </div>
+      <button class="cta">📤 Share split link</button>
+    </div></div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SplitBill — Design Directions</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,'Segoe UI',Inter,system-ui,sans-serif;background:#0d1017;color:#e8edf4;
+    padding:56px 24px;-webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:980px;margin:0 auto}
+  h1{font-size:32px;letter-spacing:-.6px}
+  .lede{color:#9aa6ba;margin-top:10px;max-width:640px}
+  .meta{color:#6b7689;font-size:13px;margin-top:18px;border-top:1px solid #1e2530;padding-top:16px}
+  .meta b{color:#c2cbd9}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:32px}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{display:block;text-decoration:none;color:inherit;border:1px solid #222b38;border-radius:18px;
+    padding:24px;background:#121723;transition:.18s;position:relative;overflow:hidden}
+  .card:hover{transform:translateY(-3px);border-color:#33415a;background:#151b29}
+  .swatch{display:flex;gap:6px;margin-bottom:16px}
+  .swatch i{width:26px;height:26px;border-radius:7px;display:block}
+  .num{font-size:13px;color:#6b7689;font-weight:700;letter-spacing:1px}
+  .card h2{font-size:21px;margin-top:4px;letter-spacing:-.3px}
+  .card .vibe{color:#8e9bb0;font-size:13px;margin-top:8px}
+  .card p{color:#aab4c5;font-size:13.5px;margin-top:12px}
+  .pros{margin-top:14px;font-size:12.5px}
+  .pros span{display:inline-block;margin:3px 6px 0 0;padding:3px 9px;border-radius:20px;background:#1b2332;color:#9fb0c8;border:1px solid #283246}
+  .open{margin-top:16px;font-size:13px;color:#5b9dff;font-weight:600}
+  .note{margin-top:40px;border:1px solid #222b38;border-radius:16px;padding:22px;background:#101521}
+  .note h3{font-size:15px;margin-bottom:8px}
+  .note ul{margin:8px 0 0 18px;color:#aab4c5;font-size:13.5px}
+  .note li{margin:5px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>SplitBill — Four Design Directions</h1>
+  <p class="lede">Same product, same five key screens (Home → Capture/OCR → Review → Assign → Results), four distinct personalities. Open each and scroll the phone gallery horizontally to compare.</p>
+  <div class="meta"><b>Audience:</b> casual friends dining out &nbsp;·&nbsp; <b>Core:</b> IOU-only, organizer-assigns &nbsp;·&nbsp; <b>Tech:</b> PWA + on-device OCR (Florence-2)</div>
+
+  <a class="card" href="5-hybrid.html" style="display:block;margin-top:32px;border-color:#15a05a;background:#10211a">
+    <div class="swatch"><i style="background:#4f46e5"></i><i style="background:#ef4444"></i><i style="background:#f59e0b"></i><i style="background:#0ea5e9"></i><i style="background:#f6f1e7"></i></div>
+    <div class="num" style="color:#3ddc84">DESIGN 05 · ★ RECOMMENDED</div>
+    <h2>Hybrid</h2>
+    <div class="vibe">Fintech structure + per-friend colors + receipt-flourish results</div>
+    <p>The synthesis of the four: trustworthy fintech backbone, a friend-color system carried across every screen, and a receipt-styled results screen as the signature shareable moment.</p>
+    <div class="pros"><span>+ trustworthy &amp; fun</span><span>+ reads at a glance</span><span>+ distinctive payoff</span></div>
+    <div class="open">Open mockups →</div>
+  </a>
+
+  <div class="grid">
+    <a class="card" href="1-receipt-native.html">
+      <div class="swatch"><i style="background:#f4efe3"></i><i style="background:#2b2620"></i><i style="background:#c0392b"></i><i style="background:#1f6f54"></i></div>
+      <div class="num">DESIGN 01</div>
+      <h2>Receipt Native</h2>
+      <div class="vibe">Skeuomorphic · thermal paper · tactile</div>
+      <p>The whole app looks like a paper receipt — monospace ink, perforated edges, dashed rules, faux barcode.</p>
+      <div class="pros"><span>+ instantly legible</span><span>+ memorable</span><span>– can feel gimmicky</span></div>
+      <div class="open">Open mockups →</div>
+    </a>
+
+    <a class="card" href="2-modern-fintech.html">
+      <div class="swatch"><i style="background:#eef0f4"></i><i style="background:#ffffff;border:1px solid #ccc"></i><i style="background:#4f46e5"></i><i style="background:#16a34a"></i></div>
+      <div class="num">DESIGN 02</div>
+      <h2>Modern Fintech</h2>
+      <div class="vibe">Clean · trustworthy · Cash-App DNA</div>
+      <p>Neutral canvas, white cards, one confident indigo accent, tabular numerals. Reads as a serious money tool.</p>
+      <div class="pros"><span>+ trustworthy</span><span>+ scalable</span><span>– a bit generic</span></div>
+      <div class="open">Open mockups →</div>
+    </a>
+
+    <a class="card" href="3-playful-social.html">
+      <div class="swatch"><i style="background:#ff5c8a"></i><i style="background:#ffb23e"></i><i style="background:#34d1bf"></i><i style="background:#7c5cff"></i></div>
+      <div class="num">DESIGN 03</div>
+      <h2>Playful Social</h2>
+      <div class="vibe">Fun · colorful · group energy</div>
+      <p>Bright gradients, rounded everything, a color per friend that carries across screens. Built for the dinner moment.</p>
+      <div class="pros"><span>+ delightful</span><span>+ color-codes people</span><span>– less "serious money"</span></div>
+      <div class="open">Open mockups →</div>
+    </a>
+
+    <a class="card" href="4-dark-pro.html">
+      <div class="swatch"><i style="background:#0a0e14"></i><i style="background:#39e6a8"></i><i style="background:#5b9dff"></i><i style="background:#ffb547"></i></div>
+      <div class="num">DESIGN 04</div>
+      <h2>Dark Pro / Glass</h2>
+      <div class="vibe">Dark · glassmorphic · neon</div>
+      <p>Deep navy-black, frosted glass panels, soft neon glows. Premium "night out" feel, OLED-friendly at the table.</p>
+      <div class="pros"><span>+ premium</span><span>+ easy on eyes</span><span>– contrast care needed</span></div>
+      <div class="open">Open mockups →</div>
+    </a>
+  </div>
+
+  <div class="note">
+    <h3>How to use these</h3>
+    <ul>
+      <li>All four use the <b>same sample bill</b> (Taverna 14, 4 diners) so you're comparing look &amp; feel, not content.</li>
+      <li>These are <b>static visual mockups</b> — no real OCR or interactivity yet. They're for picking a direction.</li>
+      <li>My read: <b>Modern Fintech</b> is the safest base; <b>Playful Social</b> best fits the "casual friends" audience; <b>Receipt Native</b> is the most distinctive wedge. We can also mix — e.g. Fintech structure with Receipt-Native flourishes on the results screen.</li>
+      <li>Next step once you pick: lock the data model + tech stack and scaffold the MVP in the chosen style.</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
