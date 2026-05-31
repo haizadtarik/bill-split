@@ -28,18 +28,21 @@ export function Home() {
             <div className="sub">Welcome back</div>
             <h1>Split a bill</h1>
           </div>
-          <span className="av lg" style={{ background: '#4f46e5' }}>
+          <span className="av lg" style={{ backgroundImage: 'var(--grad)' }}>
             🧾
           </span>
         </div>
 
-        <button className="btn" onClick={snap}>
-          📷 Snap a receipt
-        </button>
-        <button className="btn ghost" onClick={manual}>
-          ✏️ Enter manually
-        </button>
+        <div className="cta-grid">
+          <button className="btn" onClick={snap}>
+            📷 Snap a receipt
+          </button>
+          <button className="btn ghost" onClick={manual}>
+            ✏️ Enter manually
+          </button>
+        </div>
 
+        <div className="home-grid">
         <div className="card">
           <div className="row">
             <b className="small">Recent bills</b>
@@ -100,6 +103,7 @@ export function Home() {
             </div>
           </div>
         )}
+        </div>
       </div>
       <TabBar />
     </>
