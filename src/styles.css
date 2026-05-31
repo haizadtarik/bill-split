@@ -144,48 +144,41 @@ select option {
   padding-bottom: 108px;
 }
 .screen.has-cta {
-  padding-bottom: 104px;
+  padding-bottom: 28px;
 }
 
-/* ---------- landscape: a centered floating glass window ---------- */
+/* ---------- landscape: fill the screen, content centered ---------- */
 @media (min-width: 760px) {
   body {
     padding: 0;
+    overflow: hidden;
   }
   .app {
-    max-width: 1080px;
-    width: calc(100% - 56px);
-    height: calc(100dvh - 56px);
+    max-width: none;
+    width: 100%;
+    height: 100dvh;
     min-height: 0;
-    margin: 28px auto;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--glass-border);
-    border-radius: 30px;
-    box-shadow: var(--shadow-lg), inset 0 1px 0 var(--glass-hi);
-    backdrop-filter: blur(30px) saturate(1.4);
-    -webkit-backdrop-filter: blur(30px) saturate(1.4);
+    margin: 0;
     overflow: hidden;
   }
   .screen {
-    padding: 28px 28px 0;
+    padding: 32px 32px 0;
+    padding-top: max(32px, env(safe-area-inset-top));
     gap: 18px;
+    align-items: center;
   }
-  /* center content in a comfortable reading column inside the wide window */
+  /* every block sits in a centered column; grids get a touch more room */
   .screen > *:not(.cta-bar):not(.home-grid):not(.cta-grid) {
     width: 100%;
-    max-width: 640px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 720px;
   }
   .home-grid,
   .cta-grid {
     width: 100%;
-    max-width: 880px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 920px;
   }
   .screen.has-tabs {
-    padding-bottom: 116px;
+    padding-bottom: 120px;
   }
 }
 
@@ -334,26 +327,18 @@ select option {
   }
 }
 
-/* sticky footer CTA */
+/* footer CTA — inline at the end of the content (no longer floating) */
 .cta-bar {
-  position: sticky;
-  bottom: 0;
-  margin: 0 -16px;
-  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, rgba(7, 11, 24, 0.85) 55%, transparent);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  margin-top: 4px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 @media (min-width: 760px) {
   .cta-bar {
-    margin: 0 -28px;
-    padding: 16px 28px 16px;
-  }
-  .cta-bar > .btn,
-  .cta-bar > .banner {
-    max-width: 640px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
@@ -588,24 +573,6 @@ select option {
   border-top: none;
   border-radius: 0 0 8px 0;
 }
-.scanline {
-  position: absolute;
-  left: 12%;
-  right: 12%;
-  height: 2px;
-  background: var(--brand);
-  box-shadow: 0 0 16px 2px var(--brand);
-  animation: scan 2.4s ease-in-out infinite;
-}
-@keyframes scan {
-  0%,
-  100% {
-    top: 24%;
-  }
-  50% {
-    top: 72%;
-  }
-}
 .pgwrap {
   height: 8px;
   background: var(--glass-3);
@@ -783,9 +750,6 @@ select option {
 
 @media (prefers-reduced-motion: reduce) {
   body::before {
-    animation: none;
-  }
-  .scanline {
     animation: none;
   }
 }

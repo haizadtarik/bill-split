@@ -64,7 +64,6 @@ export function Capture() {
 
       <div className="scanview">
         {preview ? <img src={preview} alt="receipt" /> : <div className="frame" />}
-        {phase === 'idle' && <div className="scanline" />}
       </div>
 
       {phase === 'idle' && (
