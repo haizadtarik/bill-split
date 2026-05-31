@@ -172,7 +172,10 @@ select option {
     width: 100%;
     max-width: 720px;
   }
-  .home-grid,
+  .home-grid {
+    width: 100%;
+    max-width: 720px;
+  }
   .cta-grid {
     width: 100%;
     max-width: 920px;
@@ -258,10 +261,6 @@ select option {
 @media (min-width: 760px) {
   .cta-grid {
     grid-template-columns: 1fr 1fr;
-  }
-  .home-grid {
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
   }
 }
 
@@ -544,34 +543,6 @@ select option {
   width: 100%;
   height: 100%;
   object-fit: contain;
-}
-.frame {
-  position: absolute;
-  inset: 18% 12%;
-  border: 2px solid rgba(255, 255, 255, 0.55);
-  border-radius: 14px;
-}
-.frame::before,
-.frame::after {
-  content: '';
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  border: 3px solid var(--brand);
-}
-.frame::before {
-  top: -2px;
-  left: -2px;
-  border-right: none;
-  border-bottom: none;
-  border-radius: 8px 0 0 0;
-}
-.frame::after {
-  bottom: -2px;
-  right: -2px;
-  border-left: none;
-  border-top: none;
-  border-radius: 0 0 8px 0;
 }
 .pgwrap {
   height: 8px;
