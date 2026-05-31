@@ -167,18 +167,12 @@ select option {
     gap: 18px;
     align-items: center;
   }
-  /* every block sits in a centered column; grids get a touch more room */
-  .screen > *:not(.cta-bar):not(.home-grid):not(.cta-grid) {
-    width: 100%;
-    max-width: 720px;
-  }
-  .home-grid {
-    width: 100%;
-    max-width: 720px;
-  }
+  /* every block shares one centered column so all edges line up */
+  .screen > *:not(.cta-bar):not(.home-grid):not(.cta-grid),
+  .home-grid,
   .cta-grid {
     width: 100%;
-    max-width: 920px;
+    max-width: 760px;
   }
   .screen.has-tabs {
     padding-bottom: 120px;
