@@ -15,9 +15,11 @@ export function Capture() {
   const [progress, setProgress] = useState<OcrProgress | null>(null)
   const [device, setDevice] = useState<string | null>(null)
   const [error, setError] = useState<string>('')
+  const [onDevice, setOnDevice] = useState(false)
 
   function onProgress(p: OcrProgress) {
     setProgress(p)
+    if (p.stage === 'loading-model') setOnDevice(true)
     if (activeDevice) setDevice(activeDevice)
   }
 
@@ -43,7 +45,7 @@ export function Capture() {
       navigate('/new/review')
     } catch (err) {
       console.error(err)
-      setError('On-device OCR failed to load. No worries — enter the items manually.')
+      setError("Couldn't read the receipt automatically. No worries — enter the items manually.")
       setPhase('error')
     }
   }
@@ -73,7 +75,8 @@ export function Capture() {
             <div style={{ fontSize: 30 }}>🧾</div>
             <div style={{ fontWeight: 600, marginTop: 6 }}>Snap the whole receipt</div>
             <div className="small muted" style={{ marginTop: 4 }}>
-              Lay it flat and fill the frame. Reads on your device — nothing is uploaded.
+              Lay it flat and fill the frame. Read with Gemini; falls back to
+              on-device when you're offline.
             </div>
           </div>
           <button className="btn" onClick={() => fileRef.current?.click()}>
@@ -100,8 +103,9 @@ export function Capture() {
             </div>
           )}
           <div className="small muted" style={{ marginTop: 10 }}>
-            🔒 Donut (CORD) · runs locally{device ? ` on ${device.toUpperCase()}` : ''}. First scan
-            downloads the model once, then it's cached.
+            {onDevice
+              ? `🔒 On-device (Donut)${device ? ` · ${device.toUpperCase()}` : ''} — model downloads once, then it's cached.`
+              : '☁️ Reading with Gemini — your receipt photo is sent to the cloud for this scan.'}
           </div>
         </div>
       )}
