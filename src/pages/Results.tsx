@@ -22,8 +22,11 @@ function buildShareText(bill: Bill): string {
   const lines = [`🧾 ${bill.title} — split with SplitBill`, '']
   for (const s of split.shares) {
     const tag = s.person.id === bill.paidBy ? ' (paid)' : ''
-    const what = s.items.length ? ` — ${s.items.join(', ')}` : ''
-    lines.push(`${s.person.name}${tag}: ${formatCents(s.total)}${what}`)
+    lines.push(`${s.person.name}${tag}: ${formatCents(s.total)}`)
+    for (const li of s.lineItems) {
+      lines.push(`  • ${li.name} — ${formatCents(li.amount)}`)
+    }
+    if (s.taxTip > 0) lines.push(`  • Tax + tip — ${formatCents(s.taxTip)}`)
   }
   lines.push('', `Total: ${formatCents(split.grandTotal)}`)
   if (payer) {
