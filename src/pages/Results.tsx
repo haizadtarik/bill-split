@@ -117,6 +117,28 @@ export function Results() {
           </div>
         </div>
         <div className="rdash" />
+        {/* itemised bill — every line item with its price */}
+        <div className="rrow rsub">
+          <span>ITEMS</span>
+          <span className="mono">{bill.items.length}</span>
+        </div>
+        {bill.items.map((item) => {
+          const who = item.assignedTo
+            .map((pid) => bill.people.find((p) => p.id === pid)?.name)
+            .filter((n): n is string => Boolean(n))
+          return (
+            <div key={item.id}>
+              <div className="rrow">
+                <span className="rwho">{item.name}</span>
+                <span className="mono">{formatCents(item.price)}</span>
+              </div>
+              <div className="ritems">
+                {who.length ? who.join(' · ') : 'unassigned'}
+              </div>
+            </div>
+          )
+        })}
+        <div className="rdash" />
         {split.shares.map((s) => {
           const c = colorFor(s.person.colorIndex)
           const isPayer = s.person.id === bill.paidBy
