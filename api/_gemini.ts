@@ -81,5 +81,9 @@ export async function runGeminiOcr({
   }
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text
   if (!text) throw new Error('Gemini returned no content')
-  return JSON.parse(text)
+  try {
+    return JSON.parse(text)
+  } catch {
+    throw new Error(`Gemini returned unparseable JSON: ${text.slice(0, 120)}`)
+  }
 }
