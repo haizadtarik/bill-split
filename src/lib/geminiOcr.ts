@@ -1,7 +1,7 @@
 // Client side of the Gemini OCR path: downscale the receipt photo, POST it to the
 // /api/ocr proxy (which holds the key), and parse the structured JSON into a
 // ParsedReceipt. All network + browser-image concerns live here. Throws on any
-// failure so the orchestrator can fall back to on-device Donut.
+// failure so the orchestrator can fall back to on-device GLM-OCR.
 
 import { parseGemini } from './geminiParser'
 import type { ParsedReceipt } from '../types'

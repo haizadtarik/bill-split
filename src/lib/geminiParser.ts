@@ -1,7 +1,7 @@
 // Parser for Gemini's structured receipt JSON → ParsedReceipt. Gemini returns
 // amounts as decimal MAJOR units (e.g. 12.50); this is the single place we
 // convert to integer cents. Input is untrusted, so every field is validated.
-// Pure + testable, no network — mirrors donutParser.ts.
+// Pure + testable, no network — shared by the Gemini and on-device GLM-OCR paths.
 
 import type { ParsedReceipt } from '../types'
 import { parseCents } from './money'

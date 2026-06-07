@@ -1,19 +1,34 @@
 // Receipt OCR orchestrator. The primary path is cloud Gemini (via the /api/ocr
 // proxy, see geminiOcr.ts); when the device is offline or that call fails/returns
-// nothing, it falls back to on-device Donut (CORD-v2) — a receipt-tuned document
-// model that runs locally in the browser and emits structured fields directly.
+// nothing, it falls back to on-device GLM-OCR — a vision-language model that runs
+// locally in the browser and is prompted to emit the same structured JSON the
+// Gemini path returns, so both paths share one parser (parseGemini).
 //
-// The Donut engine below prefers WebGPU and falls back to WASM; its weights are
+// The GLM-OCR engine below prefers WebGPU and falls back to WASM; its weights are
 // lazy-loaded on first use and cached by the service worker. All ML/runtime
 // concerns stay isolated here: if both paths throw, the UI drops the user into
 // manual entry.
 
-import { parseDonut } from './donutParser'
+import { parseGemini } from './geminiParser'
 import type { ParsedReceipt } from '../types'
 import { geminiScan } from './geminiOcr'
 
-const MODEL_ID = 'Xenova/donut-base-finetuned-cord-v2'
-const TASK_PROMPT = '<s_cord-v2>'
+const MODEL_ID = 'onnx-community/GLM-OCR-ONNX'
+
+// Ask the on-device VLM for the exact JSON shape parseGemini already consumes, so
+// the Gemini and GLM paths converge on a single parser. Mirrors api/_gemini.ts.
+const OCR_PROMPT = [
+  'You are reading a photo of a restaurant or store receipt.',
+  'Extract every ordered line item with its price exactly as printed.',
+  'Respond with ONLY a JSON object, no markdown fences and no prose, shaped:',
+  '{"title": string, "items": [{"name": string, "price": number}], "tax": number, "tip": number}',
+  'Rules:',
+  '- "price" is the line total for that item as a decimal number (e.g. 12.50), no currency symbol.',
+  '- Do NOT include subtotal, total, balance, change, or payment lines as items.',
+  '- "tax" is the tax amount; "tip" is the tip or service charge amount (use 0 if none).',
+  '- "title" is the merchant/restaurant name if clearly visible, otherwise use "".',
+  'Return decimal numbers, never strings.',
+].join('\n')
 
 export interface OcrProgress {
   stage: 'uploading' | 'loading-model' | 'recognizing' | 'parsing'
@@ -29,7 +44,6 @@ let enginePromise: Promise<OcrEngine> | null = null
 interface OcrEngine {
   model: any
   processor: any
-  tokenizer: any
   device: 'webgpu' | 'wasm'
 }
 
@@ -40,18 +54,21 @@ export let activeDevice: 'webgpu' | 'wasm' | null = null
  * Build the backend fallback ladder. We prefer WebGPU (fast), but only when a
  * usable adapter truly exists — merely having `navigator.gpu` (e.g. some headless
  * setups) doesn't guarantee a reachable GPU. WASM is the universal fallback.
+ *
+ * GLM-OCR is a multi-billion-parameter VLM, so we load 4-bit weights to keep the
+ * one-time download and memory footprint browser-friendly on both backends.
  */
 async function backendLadder(): Promise<{ device: 'webgpu' | 'wasm'; dtype: any }[]> {
   const ladder: { device: 'webgpu' | 'wasm'; dtype: any }[] = []
   if (typeof navigator !== 'undefined' && 'gpu' in navigator) {
     try {
       const adapter = await (navigator as any).gpu.requestAdapter()
-      if (adapter) ladder.push({ device: 'webgpu', dtype: 'fp32' })
+      if (adapter) ladder.push({ device: 'webgpu', dtype: 'q4' })
     } catch {
       /* no usable adapter — skip WebGPU */
     }
   }
-  ladder.push({ device: 'wasm', dtype: 'q8' })
+  ladder.push({ device: 'wasm', dtype: 'q4' })
   return ladder
 }
 
@@ -88,14 +105,13 @@ async function getEngine(onProgress?: ProgressFn): Promise<OcrEngine> {
     let lastErr: unknown
     for (const { device, dtype } of ladder) {
       try {
-        const model = await tjs.AutoModelForVision2Seq.from_pretrained(MODEL_ID, {
+        const model = await tjs.AutoModelForImageTextToText.from_pretrained(MODEL_ID, {
           dtype,
           device,
           progress_callback,
         } as any)
         const processor = await tjs.AutoProcessor.from_pretrained(MODEL_ID)
-        const tokenizer = await tjs.AutoTokenizer.from_pretrained(MODEL_ID)
-        engine = { model, processor, tokenizer, device }
+        engine = { model, processor, device }
         activeDevice = device
         if (typeof window !== 'undefined') (window as any).__ocrDevice = device
         break
@@ -115,12 +131,12 @@ async function getEngine(onProgress?: ProgressFn): Promise<OcrEngine> {
 }
 
 /** Which engine produced the last result — exposed for the UI label/diagnostics. */
-export let activeEngine: 'gemini' | 'donut' | null = null
+export let activeEngine: 'gemini' | 'glm' | null = null
 
 /**
  * Run OCR on an image and return a parsed receipt. Tries the cloud Gemini path
  * first when online; on offline / failure / empty result, falls back to on-device
- * Donut. Throws only if BOTH paths fail — callers route that to manual entry.
+ * GLM-OCR. Throws only if BOTH paths fail — callers route that to manual entry.
  */
 export async function scanReceipt(
   imageUrl: string,
@@ -140,13 +156,37 @@ export async function scanReceipt(
       console.warn('[ocr] Gemini path failed — falling back to on-device…', err)
     }
   }
-  const parsed = await donutScan(imageUrl, onProgress)
-  activeEngine = 'donut'
-  if (typeof window !== 'undefined') (window as any).__ocrEngine = 'donut'
+  const parsed = await glmScan(imageUrl, onProgress)
+  activeEngine = 'glm'
+  if (typeof window !== 'undefined') (window as any).__ocrEngine = 'glm'
   return parsed
 }
 
-async function donutScan(
+/** Pull the first balanced JSON object out of the model's free-form text. */
+function extractJson(text: string): unknown {
+  const start = text.indexOf('{')
+  if (start === -1) throw new Error('GLM-OCR returned no JSON object')
+  let depth = 0
+  let inStr = false
+  let escaped = false
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i]
+    if (inStr) {
+      if (escaped) escaped = false
+      else if (ch === '\\') escaped = true
+      else if (ch === '"') inStr = false
+      continue
+    }
+    if (ch === '"') inStr = true
+    else if (ch === '{') depth++
+    else if (ch === '}' && --depth === 0) {
+      return JSON.parse(text.slice(start, i + 1))
+    }
+  }
+  throw new Error('GLM-OCR returned an unterminated JSON object')
+}
+
+async function glmScan(
   imageUrl: string,
   onProgress?: ProgressFn,
 ): Promise<ParsedReceipt> {
@@ -156,26 +196,31 @@ async function donutScan(
   onProgress?.({ stage: 'recognizing', label: 'Reading the receipt…' })
 
   const image = await tjs.RawImage.fromURL(imageUrl)
-  const { pixel_values } = await engine.processor(image)
-  const { input_ids: decoder_input_ids } = engine.tokenizer(TASK_PROMPT, {
-    add_special_tokens: false,
+  const messages = [
+    { role: 'user', content: [{ type: 'image' }, { type: 'text', text: OCR_PROMPT }] },
+  ]
+  const prompt = engine.processor.apply_chat_template(messages, {
+    add_generation_prompt: true,
   })
+  const inputs = await engine.processor(prompt, image)
 
   const output = await engine.model.generate({
-    pixel_values,
-    decoder_input_ids,
-    max_length: 768,
-    num_beams: 1,
+    ...inputs,
+    max_new_tokens: 1024,
     do_sample: false,
   })
 
-  const decoded = engine.tokenizer.batch_decode(output, { skip_special_tokens: false })[0]
+  // Decode only the newly generated tokens (strip the prompt prefix).
+  const promptLen = inputs.input_ids.dims.at(-1)
+  const decoded = engine.processor.batch_decode(output.slice(null, [promptLen, null]), {
+    skip_special_tokens: true,
+  })[0] as string
 
   onProgress?.({ stage: 'parsing', label: 'Sorting items…' })
   if (typeof window !== 'undefined') {
     ;(window as any).__lastOcr = { decoded, device: engine.device }
   }
-  return parseDonut(decoded)
+  return parseGemini(extractJson(decoded))
 }
 
 /** Warm the model in the background so the first scan feels instant. */

@@ -69,7 +69,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
-          // Donut ONNX weights + tokenizer are large; cache them on first use so
+          // GLM-OCR ONNX weights + tokenizer are large; cache them on first use so
           // the offline fallback is instant afterwards. One-time download.
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,svg,woff2}'],

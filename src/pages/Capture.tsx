@@ -105,7 +105,7 @@ export function Capture() {
           )}
           <div className="small muted" style={{ marginTop: 10 }}>
             {onDevice
-              ? `🔒 On-device (Donut)${device ? ` · ${device.toUpperCase()}` : ''} — model downloads once, then it's cached.`
+              ? `🔒 On-device (GLM-OCR)${device ? ` · ${device.toUpperCase()}` : ''} — model downloads once, then it's cached.`
               : '☁️ Reading with Gemini — your receipt photo is sent to the cloud for this scan.'}
           </div>
         </div>

@@ -19,7 +19,7 @@ off-app (cash, Venmo, etc.).
 ## Happy path (v1)
 1. Organizer starts a new bill and **snaps a photo of the receipt**.
 2. **Gemini OCR** (via the `/api/ocr` proxy) extracts line items, prices, tax, tip;
-   on-device Donut is the offline fallback.
+   on-device GLM-OCR is the offline fallback.
 3. Organizer **reviews/corrects** parsed items (manual edit is the safety net).
 4. Organizer **assigns each item** to a person (or splits a shared item among
    several). People are identified by **typed nicknames**.
@@ -39,7 +39,7 @@ off-app (cash, Venmo, etc.).
 | Currency | Single currency, no FX |
 | Identity | Typed nicknames; organizer responsible for keeping them distinct |
 | Platform | PWA (one codebase, mobile + web) |
-| OCR | Gemini 3.5 Flash via serverless proxy; on-device Donut fallback |
+| OCR | Gemini 3.5 Flash via serverless proxy; on-device GLM-OCR fallback |
 | Intent | Personal / friends use — ship fast, be genuinely useful |
 
 ## Explicitly deferred (post-v1)
@@ -49,27 +49,28 @@ off-app (cash, Venmo, etc.).
 - Multi-currency.
 
 ## OCR plan (the long pole)
-**Engine: Donut** (`Xenova/donut-base-finetuned-cord-v2`) via transformers.js — a
-document model fine-tuned on the CORD-v2 receipt dataset. It outputs **structured
-fields directly** (`<s_menu><s_nm>…</s_nm><s_price>…</s_price>…<s_sub_total>
-<s_tax_price>…`), not raw text.
+**Primary: Gemini 3.5 Flash** via the `/api/ocr` serverless proxy, which returns
+structured receipt JSON. **On-device fallback: GLM-OCR** (`onnx-community/GLM-OCR-ONNX`)
+via transformers.js — a 0.9B vision-language model (CogViT encoder + GLM-0.5B decoder)
+that tops OmniDocBench while staying small enough to run in the browser.
 
-> We first tried **Florence-2** (`<OCR_WITH_REGION>`) but it dropped right-aligned
-> price columns separated by wide gaps — returning item names with no prices. Donut,
-> being receipt-native, avoids this and is far more accurate on real receipt photos.
+> Earlier on-device engines were tried and dropped: **Florence-2** (`<OCR_WITH_REGION>`)
+> lost right-aligned price columns separated by wide gaps, and receipt-tuned **Donut**
+> (CORD-v2) was replaced by GLM-OCR for materially better accuracy on real receipts.
 
 Two parts:
-1. **Recognition** — Donut `generate` with the `<s_cord-v2>` task prompt.
-2. **Parsing** — `donutParser.ts` maps the tagged output → `{items, tax, tip}`,
-   rejecting non-numeric "price" fields (e.g. "Table 7") Donut sometimes mis-files.
-   Pure + unit-tested.
+1. **Recognition** — GLM-OCR is prompted (chat template + image) to emit the **same
+   JSON shape Gemini returns** (`{title, items:[{name, price}], tax, tip}`).
+2. **Parsing** — `geminiParser.ts` converts that JSON → `{items, tax, tip}` in integer
+   cents, rejecting junk/total rows. One pure, unit-tested parser serves both engines.
 
 Notes:
 - Runs on **WebGPU** when a usable adapter exists, else **single-thread WASM**
   (no SharedArrayBuffer / COOP-COEP requirement). The active device is shown in-app.
-- Sizable first download; cache via the **service worker** (one-time, PWA).
-- Inference ≈ 2s once loaded. **Manual edit is always the correction path** — Donut
-  is strongest on real receipt photos; clean synthetic text is off-distribution.
+- 4-bit (q4) weights keep the first download browser-friendly; cache via the
+  **service worker** (one-time, PWA).
+- **Manual edit is always the correction path** — the cloud path is most accurate;
+  the on-device model is the offline/privacy safety net.
 
 ## Suggested build sequencing
 - **MVP:** manual entry → organizer-assigns → proportional tax/tip → results link.

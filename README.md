@@ -30,8 +30,9 @@ npm run typecheck  # types only
 1. **Snap** a receipt → it's read by **Gemini 3.5 Flash** via a small serverless
    proxy (`/api/ocr`) that keeps the API key server-side. Gemini returns structured
    line items, prices, tax, and tip. When you're **offline** (or the cloud call
-   fails), it falls back to **on-device Donut** (`Xenova/donut-base-finetuned-cord-v2`
-   via transformers.js, WebGPU→WASM), so scanning still works with nothing uploaded.
+   fails), it falls back to **on-device GLM-OCR** (`onnx-community/GLM-OCR-ONNX`
+   via transformers.js, WebGPU→WASM) — a 0.9B vision-language model prompted to
+   return the same structured JSON, so scanning still works with nothing uploaded.
 2. **Review** the parsed items — fix anything, add/remove, set tax & tip (with
    15/18/20% quick buttons). Manual entry is always available as a fallback.
 3. **Assign** each item to one or more diners (shared items split evenly), or tap
@@ -48,10 +49,9 @@ src/
   store.ts              zustand store: draft bill + history + friends
   lib/
     split.ts            proportional split + largest-remainder rounding (cent-exact)
-    ocr.ts              orchestrator: Gemini (cloud) primary, Donut fallback
+    ocr.ts              orchestrator: Gemini (cloud) primary, GLM-OCR fallback
     geminiOcr.ts        browser Gemini path: downscale → /api/ocr → parse
-    geminiParser.ts     Gemini JSON → {items, tax, tip} (pure, decimal→cents)
-    donutParser.ts      Donut output → {items, tax, tip} (pure, no ML)
+    geminiParser.ts     receipt JSON → {items, tax, tip} (Gemini + GLM, decimal→cents)
     storage.ts          localStorage: bill history + saved friends (offline-first)
     money.ts colors.ts id.ts
   pages/                Home · Capture · Review · Assign · Results · Bills · Friends
@@ -84,7 +84,7 @@ Zero-config — Vercel auto-detects Vite.
 > **Required:** set `GEMINI_KEY` in the Vercel project (Settings → Environment
 > Variables, or `vercel env add GEMINI_KEY production`). It is read only inside the
 > `/api/ocr` function and never shipped to the client. Without it, OCR falls back
-> to on-device Donut. Locally, the same key is read from your gitignored `.env`.
+> to on-device GLM-OCR. Locally, the same key is read from your gitignored `.env`.
 
 - **Build command:** `npm run build` · **Output dir:** `dist` (both auto-detected)
 - Routing uses `HashRouter`, so deep links work with no rewrite rules.
