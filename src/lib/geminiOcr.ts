@@ -21,10 +21,13 @@ async function downscale(imageUrl: string): Promise<Blob> {
   canvas.width = w
   canvas.height = h
   const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('canvas 2d context unavailable')
+  if (!ctx) {
+    bitmap.close()
+    throw new Error('canvas 2d context unavailable')
+  }
   ctx.drawImage(bitmap, 0, 0, w, h)
   bitmap.close()
-  return await new Promise<Blob>((resolve, reject) =>
+  return new Promise<Blob>((resolve, reject) =>
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('toBlob produced no blob'))),
       'image/jpeg',
