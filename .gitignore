@@ -17,3 +17,6 @@ dist-ssr
 
 # local agent config
 .claude/
+
+#env file
+.env
