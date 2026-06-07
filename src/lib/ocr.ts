@@ -9,12 +9,13 @@
 
 import { parseDonut } from './donutParser'
 import type { ParsedReceipt } from '../types'
+import { geminiScan } from './geminiOcr'
 
 const MODEL_ID = 'Xenova/donut-base-finetuned-cord-v2'
 const TASK_PROMPT = '<s_cord-v2>'
 
 export interface OcrProgress {
-  stage: 'loading-model' | 'recognizing' | 'parsing'
+  stage: 'uploading' | 'loading-model' | 'recognizing' | 'parsing'
   /** 0..1 for the model download, undefined for indeterminate stages */
   progress?: number
   label: string
@@ -112,11 +113,39 @@ async function getEngine(onProgress?: ProgressFn): Promise<OcrEngine> {
   return enginePromise
 }
 
+/** Which engine produced the last result — exposed for the UI label/diagnostics. */
+export let activeEngine: 'gemini' | 'donut' | null = null
+
 /**
- * Run OCR on an image and return a parsed receipt. Throws on failure — callers
- * should catch and route the user to manual entry.
+ * Run OCR on an image and return a parsed receipt. Tries the cloud Gemini path
+ * first when online; on offline / failure / empty result, falls back to on-device
+ * Donut. Throws only if BOTH paths fail — callers route that to manual entry.
  */
 export async function scanReceipt(
+  imageUrl: string,
+  onProgress?: ProgressFn,
+): Promise<ParsedReceipt> {
+  const online = typeof navigator === 'undefined' || navigator.onLine !== false
+  if (online) {
+    try {
+      const parsed = await geminiScan(imageUrl, onProgress)
+      if (parsed.items.length > 0) {
+        activeEngine = 'gemini'
+        if (typeof window !== 'undefined') (window as any).__ocrEngine = 'gemini'
+        return parsed
+      }
+      console.warn('[ocr] Gemini returned no items — falling back to on-device…')
+    } catch (err) {
+      console.warn('[ocr] Gemini path failed — falling back to on-device…', err)
+    }
+  }
+  const parsed = await donutScan(imageUrl, onProgress)
+  activeEngine = 'donut'
+  if (typeof window !== 'undefined') (window as any).__ocrEngine = 'donut'
+  return parsed
+}
+
+async function donutScan(
   imageUrl: string,
   onProgress?: ProgressFn,
 ): Promise<ParsedReceipt> {
