@@ -80,12 +80,13 @@ export function Results() {
     const node = receiptRef.current
     if (!node || imaging) return
     setImaging(true)
+    // html-to-image doesn't paint the capture root's own background, so fill the
+    // canvas with the receipt's paper color — a clean full-bleed paper receipt.
+    const paper = getComputedStyle(node).getPropertyValue('--paper').trim() || '#f6f1e7'
     try {
       const blob = await toBlob(node, {
         pixelRatio: 2,
-        // include the receipt's perforated edges (they sit just outside the box)
-        style: { margin: '0' },
-        backgroundColor: '#0b1020',
+        backgroundColor: paper,
       })
       if (!blob) return
       const file = new File([blob], `${slugify(bill!.title)}-split.png`, {
