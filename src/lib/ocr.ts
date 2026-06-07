@@ -1,11 +1,12 @@
-// On-device receipt OCR via Donut (CORD-v2) — a document model fine-tuned on
-// receipts, so it emits structured fields (item, price, subtotal, tax, total)
-// instead of raw text. Runs locally in the browser; the image never leaves the
-// device. Heavy model is lazy-loaded on first use and cached by the service
-// worker thereafter.
+// Receipt OCR orchestrator. The primary path is cloud Gemini (via the /api/ocr
+// proxy, see geminiOcr.ts); when the device is offline or that call fails/returns
+// nothing, it falls back to on-device Donut (CORD-v2) — a receipt-tuned document
+// model that runs locally in the browser and emits structured fields directly.
 //
-// Prefers WebGPU and falls back to WASM. All ML/runtime concerns are isolated
-// here: if it throws, the UI drops the user into manual entry.
+// The Donut engine below prefers WebGPU and falls back to WASM; its weights are
+// lazy-loaded on first use and cached by the service worker. All ML/runtime
+// concerns stay isolated here: if both paths throw, the UI drops the user into
+// manual entry.
 
 import { parseDonut } from './donutParser'
 import type { ParsedReceipt } from '../types'
