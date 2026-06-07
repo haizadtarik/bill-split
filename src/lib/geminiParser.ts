@@ -4,12 +4,20 @@
 // Pure + testable, no network — mirrors donutParser.ts.
 
 import type { ParsedReceipt } from '../types'
+import { parseCents } from './money'
 
-/** Decimal major-unit amount → integer cents, or null if not a usable number. */
+/**
+ * Decimal major-unit amount → integer cents, or null if not a usable number.
+ * Numbers convert directly; strings (Gemini occasionally ignores the schema and
+ * returns "4.50") go through money.ts so all string→cents parsing lives in one
+ * place. Note: comma decimals ("4,50") are not normalised — the schema forces
+ * NUMBER, so that branch should rarely fire.
+ */
 function toCents(value: unknown): number | null {
-  const n = typeof value === 'number' ? value : Number.parseFloat(String(value))
-  if (!Number.isFinite(n)) return null
-  return Math.round(n * 100)
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? Math.round(value * 100) : null
+  }
+  return parseCents(String(value))
 }
 
 function cleanName(value: unknown): string {

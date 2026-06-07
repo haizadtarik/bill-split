@@ -49,4 +49,18 @@ import { parseGemini } from '../src/lib/geminiParser'
   assert.equal(r.tip, 0)
 }
 
+// Gemini occasionally returns string amounts despite the schema → still parsed
+{
+  const r = parseGemini({ items: [{ name: 'Latte', price: '3.75' }], tax: '0.50', tip: '0' })
+  assert.deepEqual(r.items, [{ name: 'Latte', price: 375 }])
+  assert.equal(r.tax, 50)
+  assert.equal(r.tip, 0)
+}
+
+// non-object rows in items don't throw and are skipped
+{
+  const r = parseGemini({ items: ['Coffee', null, { name: 'Tea', price: 2 }], tax: 0, tip: 0 })
+  assert.deepEqual(r.items, [{ name: 'Tea', price: 200 }])
+}
+
 console.log('✓ geminiParser: all assertions passed')
