@@ -133,17 +133,28 @@ async function getEngine(onProgress?: ProgressFn): Promise<OcrEngine> {
 /** Which engine produced the last result — exposed for the UI label/diagnostics. */
 export let activeEngine: 'gemini' | 'glm' | null = null
 
+export interface ScanOptions {
+  /**
+   * 'auto' (default) tries cloud Gemini first, then on-device GLM-OCR.
+   * 'glm' forces the on-device engine and skips Gemini entirely.
+   */
+  engine?: 'auto' | 'glm'
+}
+
 /**
- * Run OCR on an image and return a parsed receipt. Tries the cloud Gemini path
- * first when online; on offline / failure / empty result, falls back to on-device
- * GLM-OCR. Throws only if BOTH paths fail — callers route that to manual entry.
+ * Run OCR on an image and return a parsed receipt. In 'auto' mode tries the cloud
+ * Gemini path first when online and falls back to on-device GLM-OCR on
+ * offline/failure/empty; in 'glm' mode it goes straight to GLM-OCR. Throws only
+ * when the chosen path(s) all fail — callers route that to manual entry.
  */
 export async function scanReceipt(
   imageUrl: string,
   onProgress?: ProgressFn,
+  opts?: ScanOptions,
 ): Promise<ParsedReceipt> {
+  const forceGlm = opts?.engine === 'glm'
   const online = typeof navigator === 'undefined' || navigator.onLine !== false
-  if (online) {
+  if (!forceGlm && online) {
     try {
       const parsed = await geminiScan(imageUrl, onProgress)
       if (parsed.items.length > 0) {

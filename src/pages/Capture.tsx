@@ -16,6 +16,7 @@ export function Capture() {
   const [device, setDevice] = useState<string | null>(null)
   const [error, setError] = useState<string>('')
   const [onDevice, setOnDevice] = useState(false)
+  const [engine, setEngine] = useState<'auto' | 'glm'>('auto')
 
   function onProgress(p: OcrProgress) {
     setProgress(p)
@@ -34,8 +35,11 @@ export function Capture() {
     setPreview(url)
     setPhase('working')
     setError('')
+    // Reflect the chosen engine in the working note straight away (GLM may be
+    // cached, so 'loading-model' won't always fire to flip this on its own).
+    setOnDevice(engine === 'glm')
     try {
-      const parsed = await scanReceipt(url, onProgress)
+      const parsed = await scanReceipt(url, onProgress, { engine })
       if (parsed.items.length === 0) {
         setError("Couldn't read any items — you can add them by hand.")
         setPhase('error')
@@ -76,9 +80,28 @@ export function Capture() {
             <div style={{ fontSize: 30 }}>🧾</div>
             <div style={{ fontWeight: 600, marginTop: 6 }}>Snap the whole receipt</div>
             <div className="small muted" style={{ marginTop: 4 }}>
-              Lay it flat and fill the frame. Read with Gemini; falls back to
-              on-device when you're offline.
+              {engine === 'glm'
+                ? 'Lay it flat and fill the frame. Read fully on-device — nothing is uploaded.'
+                : "Lay it flat and fill the frame. Read with Gemini; falls back to on-device when you're offline."}
             </div>
+          </div>
+          <div className="seg" role="radiogroup" aria-label="OCR engine">
+            <button
+              className={engine === 'auto' ? 'on' : ''}
+              role="radio"
+              aria-checked={engine === 'auto'}
+              onClick={() => setEngine('auto')}
+            >
+              ☁️ Gemini · cloud
+            </button>
+            <button
+              className={engine === 'glm' ? 'on' : ''}
+              role="radio"
+              aria-checked={engine === 'glm'}
+              onClick={() => setEngine('glm')}
+            >
+              🔒 GLM · on-device
+            </button>
           </div>
           <button className="btn" onClick={() => fileRef.current?.click()}>
             📷 Take / choose photo
