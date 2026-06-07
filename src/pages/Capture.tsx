@@ -64,10 +64,11 @@ export function Capture() {
         </span>
       </div>
 
-      <div className="scanview">
-        {preview ? <img src={preview} alt="receipt" /> : <div className="frame" />}
-        {phase === 'idle' && <div className="scanline" />}
-      </div>
+      {preview && (
+        <div className="scanview">
+          <img src={preview} alt="receipt" />
+        </div>
+      )}
 
       {phase === 'idle' && (
         <>

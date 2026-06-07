@@ -57,10 +57,10 @@ export default defineConfig(({ mode }) => {
           short_name: 'SplitBill',
           description:
             'Snap a receipt, assign who-ordered-what, and split the bill. Cloud OCR (Gemini) with an on-device fallback.',
-          theme_color: '#4f46e5',
-          background_color: '#f1f3f7',
+          theme_color: '#070b18',
+          background_color: '#070b18',
           display: 'standalone',
-          orientation: 'portrait',
+          orientation: 'any',
           start_url: '/',
           icons: [
             { src: 'icon-192.svg', sizes: '192x192', type: 'image/svg+xml', purpose: 'any' },
