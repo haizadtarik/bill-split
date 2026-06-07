@@ -1,7 +1,7 @@
 # SplitBill 🧾
 
 Snap a receipt, assign who-ordered-what, and split the bill — with **proportional
-tax & tip** and **on-device OCR** (the image never leaves your phone). A PWA you
+tax & tip** and **Gemini-powered OCR** (with an on-device fallback when offline). A PWA you
 can install to your home screen.
 
 Built for casual friends dining out: the organizer drives, nobody else needs an
@@ -27,12 +27,11 @@ npm run typecheck  # types only
 
 ## How it works
 
-1. **Snap** a receipt → on-device **Donut** (`Xenova/donut-base-finetuned-cord-v2`
-   via transformers.js) reads it. Donut is a document model fine-tuned on receipts
-   (CORD-v2), so it emits structured fields (item, price, subtotal, tax, total)
-   rather than raw text. Runs on **WebGPU** when available, falling back to WASM.
-   First scan downloads the model once; the service worker caches it. No photo or
-   text is ever uploaded.
+1. **Snap** a receipt → it's read by **Gemini 3.5 Flash** via a small serverless
+   proxy (`/api/ocr`) that keeps the API key server-side. Gemini returns structured
+   line items, prices, tax, and tip. When you're **offline** (or the cloud call
+   fails), it falls back to **on-device Donut** (`Xenova/donut-base-finetuned-cord-v2`
+   via transformers.js, WebGPU→WASM), so scanning still works with nothing uploaded.
 2. **Review** the parsed items — fix anything, add/remove, set tax & tip (with
    15/18/20% quick buttons). Manual entry is always available as a fallback.
 3. **Assign** each item to one or more diners (shared items split evenly), or tap
@@ -49,8 +48,10 @@ src/
   store.ts              zustand store: draft bill + history + friends
   lib/
     split.ts            proportional split + largest-remainder rounding (cent-exact)
+    ocr.ts              orchestrator: Gemini (cloud) primary, Donut fallback
+    geminiOcr.ts        browser Gemini path: downscale → /api/ocr → parse
+    geminiParser.ts     Gemini JSON → {items, tax, tip} (pure, decimal→cents)
     donutParser.ts      Donut output → {items, tax, tip} (pure, no ML)
-    ocr.ts              Donut engine, WebGPU→WASM ladder (lazy-loaded, isolates ML)
     storage.ts          localStorage: bill history + saved friends (offline-first)
     money.ts colors.ts id.ts
   pages/                Home · Capture · Review · Assign · Results · Bills · Friends
@@ -65,8 +66,10 @@ Key decisions (see `PRODUCT_SPEC.md` for the full rationale):
 - **OCR is an accelerator, never a hard dependency** — any failure routes to manual
   entry. It prefers WebGPU and falls back to single-thread WASM (no SharedArrayBuffer
   / COOP-COEP requirement). The Capture screen shows which device actually ran.
-- **No backend.** Bills are ephemeral; history & saved friends persist locally per
-  the spec. "Share" exports a text summary (since data is device-local).
+- **Thin serverless proxy.** OCR now calls Gemini through `/api/ocr` (a Vercel
+  function holding `GEMINI_KEY`); everything else stays device-local. Bills are
+  ephemeral; history & saved friends persist in localStorage. The Deploy section
+  covers setting `GEMINI_KEY` in Vercel.
 
 ## Design
 
@@ -77,6 +80,11 @@ results page. Browse `designs/index.html` for the alternatives explored.
 ## Deploy (Vercel)
 
 Zero-config — Vercel auto-detects Vite.
+
+> **Required:** set `GEMINI_KEY` in the Vercel project (Settings → Environment
+> Variables, or `vercel env add GEMINI_KEY production`). It is read only inside the
+> `/api/ocr` function and never shipped to the client. Without it, OCR falls back
+> to on-device Donut. Locally, the same key is read from your gitignored `.env`.
 
 - **Build command:** `npm run build` · **Output dir:** `dist` (both auto-detected)
 - Routing uses `HashRouter`, so deep links work with no rewrite rules.
