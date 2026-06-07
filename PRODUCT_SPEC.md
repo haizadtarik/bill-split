@@ -5,7 +5,7 @@ _Last updated: 2026-05-30_
 ## One-liner
 A PWA that lets friends at a restaurant snap a receipt, assign who-ordered-what,
 and instantly see who owes the organizer how much — no app install required for
-most people, and all OCR runs on-device.
+most people. OCR runs in the cloud (Gemini) with an on-device fallback.
 
 ## Target user
 **Casual friends dining out.** One person ("the organizer") drives the bill;
@@ -18,7 +18,8 @@ off-app (cash, Venmo, etc.).
 
 ## Happy path (v1)
 1. Organizer starts a new bill and **snaps a photo of the receipt**.
-2. **On-device OCR (transformers.js)** extracts line items, prices, tax, tip.
+2. **Gemini OCR** (via the `/api/ocr` proxy) extracts line items, prices, tax, tip;
+   on-device Donut is the offline fallback.
 3. Organizer **reviews/corrects** parsed items (manual edit is the safety net).
 4. Organizer **assigns each item** to a person (or splits a shared item among
    several). People are identified by **typed nicknames**.
@@ -38,7 +39,7 @@ off-app (cash, Venmo, etc.).
 | Currency | Single currency, no FX |
 | Identity | Typed nicknames; organizer responsible for keeping them distinct |
 | Platform | PWA (one codebase, mobile + web) |
-| OCR | transformers.js, on-device |
+| OCR | Gemini 3.5 Flash via serverless proxy; on-device Donut fallback |
 | Intent | Personal / friends use — ship fast, be genuinely useful |
 
 ## Explicitly deferred (post-v1)
