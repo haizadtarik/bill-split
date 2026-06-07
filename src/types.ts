@@ -45,6 +45,8 @@ export interface PersonShare {
   total: number
   /** short human summary of what they had, e.g. "pizza + wine" */
   items: string[]
+  /** per-item breakdown of what this person pays, with their cent share of each */
+  lineItems: { name: string; amount: number }[]
 }
 
 /** Structured receipt produced by the OCR pipeline (prices in cents). */

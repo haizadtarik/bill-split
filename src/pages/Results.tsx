@@ -117,33 +117,12 @@ export function Results() {
           </div>
         </div>
         <div className="rdash" />
-        {/* itemised bill — every line item with its price */}
-        <div className="rrow rsub">
-          <span>ITEMS</span>
-          <span className="mono">{bill.items.length}</span>
-        </div>
-        {bill.items.map((item) => {
-          const who = item.assignedTo
-            .map((pid) => bill.people.find((p) => p.id === pid)?.name)
-            .filter((n): n is string => Boolean(n))
-          return (
-            <div key={item.id}>
-              <div className="rrow">
-                <span className="rwho">{item.name}</span>
-                <span className="mono">{formatCents(item.price)}</span>
-              </div>
-              <div className="ritems">
-                {who.length ? who.join(' · ') : 'unassigned'}
-              </div>
-            </div>
-          )
-        })}
-        <div className="rdash" />
+        {/* itemised bill under each person, including their tax + tip share */}
         {split.shares.map((s) => {
           const c = colorFor(s.person.colorIndex)
           const isPayer = s.person.id === bill.paidBy
           return (
-            <div key={s.person.id}>
+            <div key={s.person.id} className="rperson">
               <div className="rrow">
                 <span className="rwho">
                   <span className="tick" style={{ background: c.solid }} />
@@ -154,7 +133,18 @@ export function Results() {
                   {formatCents(s.total)}
                 </span>
               </div>
-              {s.items.length > 0 && <div className="ritems">{s.items.join(' · ')}</div>}
+              {s.lineItems.map((li, i) => (
+                <div className="rrow ritem" key={i}>
+                  <span>{li.name}</span>
+                  <span className="mono">{formatCents(li.amount)}</span>
+                </div>
+              ))}
+              {s.taxTip > 0 && (
+                <div className="rrow ritem">
+                  <span>Tax + tip</span>
+                  <span className="mono">{formatCents(s.taxTip)}</span>
+                </div>
+              )}
             </div>
           )
         })}

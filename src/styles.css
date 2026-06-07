@@ -650,6 +650,19 @@ select option {
   margin: -2px 0 6px 20px;
   letter-spacing: 0.5px;
 }
+.receipt .rperson {
+  padding-bottom: 7px;
+}
+.receipt .rperson + .rperson {
+  border-top: 1px dotted var(--paper-line);
+  padding-top: 7px;
+}
+.receipt .ritem {
+  font-size: 11px;
+  color: #7a715f;
+  line-height: 1.55;
+  padding-left: 20px;
+}
 .receipt .rtotal {
   font-weight: 700;
   font-size: 15px;
