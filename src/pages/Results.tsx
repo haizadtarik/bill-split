@@ -1,10 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { toBlob } from 'html-to-image'
 import { useStore } from '../store'
 import { computeSplit } from '../lib/split'
 import { colorFor } from '../lib/colors'
 import { formatCents } from '../lib/money'
 import type { Bill } from '../types'
+
+function slugify(s: string): string {
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'splitbill'
+  )
+}
 
 function buildShareText(bill: Bill): string {
   const split = computeSplit(bill)
@@ -31,6 +41,8 @@ export function Results() {
   const setSavedPaidBy = useStore((s) => s.setSavedPaidBy)
   const bill = useMemo(() => history.find((b) => b.id === id), [history, id])
   const [copied, setCopied] = useState(false)
+  const [imaging, setImaging] = useState(false)
+  const receiptRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!bill) navigate('/', { replace: true })
@@ -60,6 +72,46 @@ export function Results() {
       setTimeout(() => setCopied(false), 1800)
     } catch {
       /* clipboard blocked */
+    }
+  }
+
+  // Render the receipt to a PNG and share it as a file (with a download fallback).
+  async function shareImage() {
+    const node = receiptRef.current
+    if (!node || imaging) return
+    setImaging(true)
+    try {
+      const blob = await toBlob(node, {
+        pixelRatio: 2,
+        // include the receipt's perforated edges (they sit just outside the box)
+        style: { margin: '0' },
+        backgroundColor: '#0b1020',
+      })
+      if (!blob) return
+      const file = new File([blob], `${slugify(bill!.title)}-split.png`, {
+        type: 'image/png',
+      })
+      const canShareFiles =
+        typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })
+      if (navigator.share && canShareFiles) {
+        try {
+          await navigator.share({ files: [file], title: bill!.title })
+          return
+        } catch (err) {
+          // user dismissed the share sheet — don't force a download
+          if (err instanceof Error && err.name === 'AbortError') return
+          /* real failure — fall through to download */
+        }
+      }
+      // fallback: trigger a download of the PNG
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = file.name
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setImaging(false)
     }
   }
 
@@ -106,7 +158,7 @@ export function Results() {
       </div>
 
       {/* receipt flourish */}
-      <div className="receipt">
+      <div className="receipt" ref={receiptRef}>
         <div className="center">
           <div className="brand">SPLITBILL</div>
           <div className="rsub">
@@ -168,8 +220,11 @@ export function Results() {
       </div>
 
       <div className="cta-bar">
-        <button className="btn" onClick={share}>
-          {copied ? '✓ Copied to clipboard' : '📤 Share split'}
+        <button className="btn" onClick={shareImage} disabled={imaging}>
+          {imaging ? '… Rendering receipt' : '🧾 Share as image'}
+        </button>
+        <button className="btn ghost" onClick={share}>
+          {copied ? '✓ Copied to clipboard' : '📤 Share as text'}
         </button>
       </div>
     </div>

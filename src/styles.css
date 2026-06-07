@@ -325,6 +325,9 @@ select option {
   margin-top: 4px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
+.cta-bar .btn + .btn {
+  margin-top: 8px;
+}
 @media (min-width: 760px) {
   .cta-bar {
     width: 100%;
