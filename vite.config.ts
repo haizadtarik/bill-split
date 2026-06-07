@@ -13,6 +13,12 @@ function devOcrApi(env: Record<string, string>): PluginOption {
     configureServer(server) {
       server.middlewares.use('/api/ocr', (req, res, next) => {
         if (req.method !== 'POST') return next()
+        if (!env.GEMINI_KEY) {
+          res.statusCode = 500
+          res.setHeader('Content-Type', 'application/json')
+          res.end(JSON.stringify({ error: 'GEMINI_KEY not configured' }))
+          return
+        }
         let raw = ''
         req.on('data', (chunk) => (raw += chunk))
         req.on('end', async () => {
