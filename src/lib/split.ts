@@ -52,6 +52,7 @@ export function computeSplit(bill: Bill): SplitResult {
   const idx = new Map(people.map((p, i) => [p.id, i]))
   const subtotals = new Array(people.length).fill(0)
   const itemsPer: string[][] = people.map(() => [])
+  const lineItemsPer: { name: string; amount: number }[][] = people.map(() => [])
 
   for (const item of bill.items) {
     if (item.assignedTo.length === 0) continue
@@ -65,6 +66,7 @@ export function computeSplit(bill: Bill): SplitResult {
       if (i === undefined) return
       subtotals[i] += parts[j]
       itemsPer[i].push(shortName(item.name))
+      lineItemsPer[i].push({ name: item.name, amount: parts[j] })
     })
   }
 
@@ -79,6 +81,7 @@ export function computeSplit(bill: Bill): SplitResult {
     taxTip: taxTips[i],
     total: subtotals[i] + taxTips[i],
     items: dedupe(itemsPer[i]),
+    lineItems: lineItemsPer[i],
   }))
 
   return {

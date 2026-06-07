@@ -325,6 +325,9 @@ select option {
   margin-top: 4px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
+.cta-bar .btn + .btn {
+  margin-top: 8px;
+}
 @media (min-width: 760px) {
   .cta-bar {
     width: 100%;
@@ -649,6 +652,19 @@ select option {
   color: #7a715f;
   margin: -2px 0 6px 20px;
   letter-spacing: 0.5px;
+}
+.receipt .rperson {
+  padding-bottom: 7px;
+}
+.receipt .rperson + .rperson {
+  border-top: 1px dotted var(--paper-line);
+  padding-top: 7px;
+}
+.receipt .ritem {
+  font-size: 11px;
+  color: #7a715f;
+  line-height: 1.55;
+  padding-left: 20px;
 }
 .receipt .rtotal {
   font-weight: 700;
